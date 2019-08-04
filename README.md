@@ -193,11 +193,11 @@
   * **Spot instances** - short workload, cheap, can lose instances, good for batch jobs, big data analytics etc.
   * **Dedicated instances** - no other customer will share the hardware, but instances from same AWS account can share hardware, no control on instance placement
   * **Dedicated hosts** - the entire server is reserved, provides more control on instance placement, more visibility into sockets and cores, good for "bring your own licenses", complicated regulatory needs
-  * Billing by second with a minimum of 60 seconds
-  * A custom AMI can be created with pre-installed software packages, security patches etc. instead of writing user data scripts, so that the boot time is less during autoscaling
-  * AMIs are built for a specific region, but can be copied across regions
-  * T2/T3 are burstable instances. Spikes are handled using burst credits that are accumulated over time. If burst credits are all consumed, performance will suffer
-  * M instance types are balanced
+* Billing by second with a minimum of 60 seconds
+* A custom AMI can be created with pre-installed software packages, security patches etc. instead of writing user data scripts, so that the boot time is less during autoscaling
+* AMIs are built for a specific region, but can be copied across regions
+* T2/T3 are burstable instances. Spikes are handled using burst credits that are accumulated over time. If burst credits are all consumed, performance will suffer
+* M instance types are balanced
   
 ## ELB
   
@@ -285,3 +285,13 @@
   * Write Scaling using sharding
   * Read Scaling using Read Replicas
   * Multi AZ with Failover Capability
+
+## VPC
+
+* VPC Flow Logs allows us to monitor the traffic within, in and out of your VPC (useful for security, performance, audit)
+* VPC are per Account per Region
+* Subnets are per VPC per AZ
+* Elastic cache can be used as - db cache, session store
+* Caching patterns - 
+  * Write through
+  * Lazy loading
