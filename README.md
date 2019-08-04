@@ -176,6 +176,7 @@
 * Security Groups are for network security
 * Security groups are locked down to a region / VPC combination
 * One security group can be attached to multiple EC2 instances
+* Multiple security groups can be assigned to a single EC2 instance
 * If connection to application times out, it could be a security group issue
 * If connection is refused, it's an application issue
 * All inbound traffic is blocked by default
@@ -198,6 +199,11 @@
 * AMIs are built for a specific region, but can be copied across regions
 * T2/T3 are burstable instances. Spikes are handled using burst credits that are accumulated over time. If burst credits are all consumed, performance will suffer
 * M instance types are balanced
+* Change in security group takes effect immediately
+* Security groups are stateful and thus when an inbound rule is created the security group also allows the traffic out
+* Access Control Lists are stateles and hence both inbound and outbound rules need to be created
+* Security groups cannot blacklist an IP or port. Everything is blocked by default, we need to specifically open ports
+
   
 ## ELB
   
@@ -230,10 +236,11 @@
 * An EC2 machine by default loses its root volume when terminated
 * It's locked to an AZ. To move a volume to a different AZ, a snapshot needs to be created
 * EBS Volume types:
-  * **GP2(SSD)** - General purpose SSD volume
-  * **IO1(SSD)** - Highest-performance SSD volume for mission-critical low-latency or high throughput workloads
-  * **ST1(HDD)** - Low cost HDD volume designed for frequently accessed, throughput intensive workloads
-  * **SC1(HDD)** - Lowest cost HDD volume designed for less frequently accessed workloads
+  * **General Purposse SSD (GP2)** - General purpose SSD volume
+  * **Provisioned IOPS SSD (IO1)** - Highest-performance SSD volume for mission-critical low-latency or high throughput workloads. Good for Databases.
+  * **Throughput Optimized HDD (ST1)** - Low cost HDD volume designed for frequently accessed, throughput intensive workloads. Good for big data and datawarehouses
+  * **Cold HDD (SC1)** - Lowest cost HDD volume designed for less frequently accessed workloads. Good for file servers
+  * **EBS Magnetic HDD (Standard)** - Previous generation HDD. For workloads where data is infrequently accessed
 * The size and IOPS (only for IO1) can be increased
 * Increasing the size of the volume does not automatically increase the size of the partition
 * EBS volumes can be backed up using snapshots
@@ -243,6 +250,8 @@
 * Copying an unencrypted snapshot allows encryption
 * All the data in flight moving between the instance and an encrypted volume is encrypted
 * EBS backups use IO and hence backups should be taken during off-peak hours
+* Each EBS volume is automatically replicated within its own AZ to protect gtom component failute and provide high availability and durability
+* EC2 instance and its volume are going to be in the same AZ
 
 ## Route 53
   
@@ -260,7 +269,7 @@
 ## RDS
 
 * Upto 5 Read Replicas (Async Replication - within AZ, cross AZ or cross Region)
-* Replication for Disaster Recovery is synchronous (across AZ - Automatic failover)
+* Replication for Disaster Recovery is synchronous (across AZ - Automatic failover - DNS endpoint remains same) - Multi AZ
 * Replicas can be promoted to their own DB
 * Automated backups:
   * Daily full snapshot of the database
@@ -269,7 +278,7 @@
   * 7 days retention (can be increased to 35 days)
 * DB Snapshots:
   * Manually triggered by the user
-  * Retention of backup for as long as you want
+  * Retention of backup for as long as we want
 * Encryption at rest capability with AWS KMS - AES-256 encryption
 * To enforce SSL:
   * PostgreSQL: rds.force_ssl=1 in the AWS RDS Console (Paratemer Groups)
@@ -277,14 +286,21 @@
 * To connect using SSL:
   * Provide the SSL Trust certificate (can be download from AWS)
   * Provide SSL options when connecting to database
-* Aurora storage automatically grows in increments of 10GB, up to 64 TB
-* Aurora can have 15 replicas while MySQL has 5, and the replication process is faster (sub 10 ms replica lag)
-* Failover in Aurora is instantaneous. It’s HA native
-* ElastiCache is to get managed Redis or Memcached
-* ElasticCache features - 
-  * Write Scaling using sharding
-  * Read Scaling using Read Replicas
-  * Multi AZ with Failover Capability
+* RDS, in general, is not serverless (except Aurora Serverless which is serverless)
+* We cannot access the RDS virtual machines. Patching the RDS operating system is Amazon's responsibility
+* The backup data is stored in S3
+* Backups are taken during specified window. The application may experience elavated latency during backup
+* Restoring DB from automatic backup or snapshots always creates a new RDS instance with a new DNS endpoint
+* Read replicas of read replicas are possible
+* Each read replica will have its own DNS endpoint
+* Read replica can be created in a separate region as well
+* If a read replica is promoted to its own database, the replication will stop
+* Read replica cannot be enabled unless the automatic backups are also enabled
+* Read replicas themselves can be Multi-AZ for disaster recovery
+* A failover in a Multi-AZ deployment can be forced by rebooting the DB
+* Two ways of improving performance
+  * Read replicas
+  * ElasticCache
 
 ## VPC
 
@@ -295,3 +311,48 @@
 * Caching patterns - 
   * Write through
   * Lazy loading
+
+## DynamoDB
+
+* Supports both document and key-value data model
+* Stored on SSD storage
+* Spread across 3 geographically distributed data centers
+* Supports both Eventual Consistant Reads (Default) & Strongly Consistant Reads
+* Serverless service
+
+## Redshift
+
+* Amazon's data warehouse solution
+* Single node (160 GB) or multi node (leader node and compute node - upto 128 compute nodes)
+* Column based data store, column based compression techniques and multiple other compression techniques
+* No indexes or materialized views
+* Massively parallel processing
+* Redshift attempts to maintain 3 copies of data (the original and replica on the compute nodes and a backup in S3)
+* Available in only 1 AZ
+* Backup retention period is 1 day by default which can be extended to 35 days
+* Can asynchronously replicate to S3 in a different region for disaster recovery
+
+## Aurora
+
+* Aurora storage automatically grows in increments of 10GB, up to 64 TB
+* Aurora can have 15 replicas while MySQL has 5, and the replication process is faster (sub 10 ms replica lag)
+* 2 copies of data is maintained in each AZ with a minimum of 3 AZ
+* Copute resources can scale upto 32 vCPUs and 244 GB of memory
+* Aurora can transparently handle the loss of 2 copies of data without affecting write availability and 3 copies of data without affecting read availability
+* Backups and snapshots does not impact database performance
+* Storage is self-healing. Disks and blocks are scanned for errors and repaired automatically
+* Aurora snapshots can be shared with other AWS accounts
+* Two types of replicas - MySQL replicas and Aurora Replicas
+* Automated failover is only possible with Aurora replicas
+* Failover in Aurora is instantaneous. It’s HA native
+
+## ElasticCache
+
+* ElastiCache is to get managed Redis or Memcached
+* ElasticCache features - 
+  * Write Scaling using sharding
+  * Read Scaling using Read Replicas
+  * Multi AZ with Failover Capability
+* Redis - Multi AZ, Backups and restore
+* Memcached - Multi threaded, horizontal scaling
+
