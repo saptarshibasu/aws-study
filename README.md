@@ -203,8 +203,24 @@
 * Security groups are stateful and thus when an inbound rule is created the security group also allows the traffic out
 * Access Control Lists are stateles and hence both inbound and outbound rules need to be created
 * Security groups cannot blacklist an IP or port. Everything is blocked by default, we need to specifically open ports
+* `http://169.254.169.254/latest/user-data/` gives user data scripts
+* `http://169.254.169.254/latest/meta-data/` gives meta data
+* `http://169.254.169.254/latest/meta-data/public-ipv4/` gives public IP
+* `http://169.254.169.254/latest/meta-data/local-ipv4/` gives local IP
+* Two types of placement groups
+  * Clustered Placement Group - Grouping of instances within a single AZ. Recommended for applications that need low network latency and high network throughput. Only certain instances can be launched in this placement group. It cannot spac multiple AZ
+  * Spread Placement Group - Instances are placed in distinct hardware. Recommended for applications that have a small number of critical instances that should be kept separate from each other. It can span multiple AZ
+* The instances within a placement group should be homogeneous
+* Existing instances can't be moved into a placement group
+* Placement groups can't be merged
 
-  
+## EFS
+
+* Supports Network File System version 4 (NFSv4)
+* Read after write consistency
+* Data is stored across multiple AZ's within a region
+* No pre-provisioning required
+
 ## ELB
   
 * **ELB types** - 
@@ -220,6 +236,7 @@
 * Network Load Balancers have less latency ~100 ms (vs 400 ms for ALB)
 * Load Balancers have static host name. DO NOT resolve & use underlying IP
 * LBs can scale but not instantaneously – contact AWS for a “warm-up”
+* ELBs do not have a predefined IPv4 address. We resolve to them using a DNS name
 
 ## Auto Scaling Group
 
@@ -250,8 +267,38 @@
 * Copying an unencrypted snapshot allows encryption
 * All the data in flight moving between the instance and an encrypted volume is encrypted
 * EBS backups use IO and hence backups should be taken during off-peak hours
-* Each EBS volume is automatically replicated within its own AZ to protect gtom component failute and provide high availability and durability
+* Each EBS volume is automatically replicated within its own AZ to protect from component failure and provide high availability and durability
 * EC2 instance and its volume are going to be in the same AZ
+* Migrating EBS to a different AZ or Region
+  * Create a snapshot
+  * Create an AMI
+  * Launch an EC2 instance in a different AZ with the AMI
+  * Copy the AMI to a different Region
+  * Launch an EC2 instance in a different Region with the AMI
+* The size and type of the EBS volumes can be changed without even stopping the EC2 instance
+* Snapshots exist on S3
+* Snapshots are incremental
+* To take a snapshot of the root device, the instance needs to be stopped
+* AMI can be created directly from the volume as well
+* AMI root device storage can be
+  * Instance Store (Ephemeral Stores)
+  * EBS Backed Volumes
+* Instance store volumes are created from a template stored in Amazon S3
+* Instance stores are attached to the host where the EC2 is running, whereas EBS volumes are network volumes. However, in 90% of the use cases the difference in latency with the two types of stores does not make any difference
+* Throughput = IOPS * I/O size. The I/O size is 256KB (earlier 16KB). If the IOPS provisioned is 500, the instance can achieve 500 256KB writes per second
+* To encrypt a root volume, 
+  * Take a snapshot
+  * Copy the snapshot and choose the ecryption option (Once encrypted, it cannot be uncrypted by again making a copy)
+  * Create an Image (AMI) from the encrypted snapshot
+* Snapshots of encrypted volumes are always encrypted
+* Volumes restored from encrypted snapshots are encrypted automatically
+* Snapshots can be shared, but only if they are unencrypted
+
+## CloudWatch
+
+* CloudWatch is for monitoring performance, whereas CloudTrail is for auditing API calls
+* CloudWatch with EC2 will monitor events every 5 min by default. With detailed monitoring, the interval will be 1 min
+* CloudWatch alarms can be created to trigger notifications
 
 ## Route 53
   
@@ -264,7 +311,13 @@
 * Route53 has advanced features such as:
   * Load balancing (through DNS – also called client load balancing)
   * Health checks (although limited…)
-  * Routing policy: **simple**, **failover**, **geolocation**, **geoproximity**, **latency**, **weighted**
+  * Routing policy: **simple**, **failover**, **geolocation**, **geoproximity**, **latency**, **weighted**, **multivalue answer**
+* IPv4 - 32 bit, IPv6 - 128 bit
+* **Simple Routing** - Multiple IP addresses against a single A record. Route 53 returs all of them in random order
+* **Wighted Routing** - A separate A record for each IP with a percentage weight. A separate health check can be associated with each IP or A record. SNS notification can be sent if a health check fails. If a health check fails, the server is removed from Route 53, until the health check passes
+* **Latency Based Routing** - A separate A record for each IP with a percentage weight. A separate health check can be associated with each IP or A record. Routing happens to the server with lowest latency
+* **Failover Routing** - 2 separate A records - one for primary and one for secondary. Health check can be associated with each, If primary goes down, traffic will all be ruted to secondary
+* **Geolocation Based Routing** - A separate A record for each IP. Each A record is mapped to a location and the routing happens to a specific server depending on which location the DNS query originated. Good for scenarios where different website will have different language laels based on location
 
 ## RDS
 
