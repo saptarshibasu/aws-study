@@ -123,6 +123,7 @@
 * Origin Access Identity (OAI) is an user used by Cloudfront to access the S3 files
 * S3 bucket policy gives access to OAI and thus preventing users from directly accessing the S3 files bypassing the Cloudfront
 * Cloudfront accesslogs can be stored in an S3 bucket
+* To serve the media of a WordPress website from Cloudfront usethe Apache .htaccess file to rewrite the URLs
 
 ## Snowball
 
@@ -220,6 +221,9 @@
 * Read after write consistency
 * Data is stored across multiple AZ's within a region
 * No pre-provisioning required
+* To use EFS
+  * install amazon-efs-utils
+  * mount the EFS at the appropriate location
 
 ## ELB
   
@@ -306,6 +310,9 @@
 * CloudWatch is for monitoring performance, whereas CloudTrail is for auditing API calls
 * CloudWatch with EC2 will monitor events every 5 min by default. With detailed monitoring, the interval will be 1 min
 * CloudWatch alarms can be created to trigger notifications
+* Enabling CloudWatch logs for EC2
+  * Assign appropriate CloudWatch access policy to the IAM role
+  * Install CloudWatch agent (awslogsd) in EC2
 
 ## Route 53
   
@@ -325,6 +332,8 @@
 * **Latency Based Routing** - A separate A record for each IP with a percentage weight. A separate health check can be associated with each IP or A record. Routing happens to the server with lowest latency
 * **Failover Routing** - 2 separate A records - one for primary and one for secondary. Health check can be associated with each, If primary goes down, traffic will all be ruted to secondary
 * **Geolocation Based Routing** - A separate A record for each IP. Each A record is mapped to a location and the routing happens to a specific server depending on which location the DNS query originated. Good for scenarios where different website will have different language laels based on location
+* **Multivalue Answer** - Simple routing with health checks of each IP
+* **Geoproximity** - Must use Route 53 Traffic Flow. Routes traffic based on geographic location of users and resources. This can be further influenced with biases
 
 ## RDS
 
@@ -468,6 +477,11 @@
 * By default, each custom NACL denies all inbound and outbound traffic
 * Each subnet in a VPC must be associated with a NACL. I we don not assign an NACL with the subnet, the subnet will have the default NACL assigned
 * IP addresses can be blocked by NACL and NOT security groups
+* To be able to SSH into an EC2 system in a ublic subnet of a custom VPC, following are required
+  * An internet gateway should be assigned to the VPC
+  * The public subnets should be associated with a custom route table should have a route that will allow destination to everywhere (0.0.0.0/0) through the internet gateway
+* Private subnets should be associated with a custom NACL that allows traffic to and from the public subnets (atleast SSH & ICMP) and internet (for NAT Gateway to work)
+* Private subnet should be associated with a route table that route all internet traffic (0.0.0.0/0) to the NAT Gateway
 
 ## SQS
 
