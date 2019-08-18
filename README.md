@@ -225,8 +225,8 @@
   
 * **ELB types** - 
   * Classic Load Balancer (V1 - old generation)
-  * Application Load Balancer (V2 - new generation) - Layer 7
-  * Network Load Balancer (V2 - new generation) - Layer 4
+  * Application Load Balancer (V2 - new generation) - Layer 7 - application aware
+  * Network Load Balancer (V2 - new generation) - Layer 4 - extreme performance
 * ELB provides **health check** for instances
 * **ALB** can handle **multiple applications** where each application has a traget group and load for that application is balanced across instances within the particular target group
 * ALB supports **HTTP/HTTPS** & **Websocket** protocols
@@ -237,6 +237,10 @@
 * Load Balancers have static host name. DO NOT resolve & use underlying IP
 * LBs can scale but not instantaneously – contact AWS for a “warm-up”
 * ELBs do not have a predefined IPv4 address. We resolve to them using a DNS name
+* 504 error means the gateway has timed out and it is an application issue and NOT a load balancer issue
+* Sticky session - required if the ec2 instance is writing a file to the local disk. traffice will not got tot other ec2 instances for the session
+* Cross zone load balancing - if one AZ does not receive any traffic
+* Path Patterns - allows to route traffic based on the URL patterns
 
 ## Auto Scaling Group
 
@@ -246,6 +250,9 @@
 * If instance is marked as unhealthy by load balancer, ASG will restart it
 * ASG can scale based on CloudWatch alarms
 * ASG can scale based on custom metric sent by applications to CloudWatch
+* If all subnets in different availability zones are selected, the ASG will distribute the instances across multiple AZ
+* During the configured warm up period the EC2 instance will not contribute to the auto scaling metrics
+* Scaling out in increasing the number of instances and scaling up is increasing the resources
 
 ## EBS
 
@@ -409,3 +416,120 @@
 * Redis - Multi AZ, Backups and restore
 * Memcached - Multi threaded, horizontal scaling
 
+## VPC
+
+* Subnet doesn't span across AZ
+* Security Groups doesn't span across VPC
+* A VPC can have only 1 internet Gateway
+* Amazon reserves 5 IP in each subnet
+* Each EC2 instance performs source/destination checks by default. This means that the instance must be the source or destination of any traffic it sends or receives. However, a NAT instance must be able to send and receive traffic when the source or destination is not itself. Therefore, we must disable source/destination checks on the NAT instance
+* The public subnet must be configured to asign public IP addresses to the EC2 machines
+* NAT instace / gateway must be in public subnet
+* A route from private subnet to NAT Gateway is important
+* NAT instance must have a security group
+* NAT Gateway Redundant inside an AZ
+* NAT Gateway starts at 5 Gbps and scales upto 45 Gbps
+* NAT Gateway don't need a security group
+* NAT Gateway automatically have a public IP assigned
+* With NAT Gateway there is no need to disable source / destination checks
+* Create a NAT Gateway in each AZ and configure the route to use the NAT Gateway in the same AZ
+* NACL is evaluated before security groups
+* NACL's rules are executed in chronological order with lowest numbered rule evaluated first. Therefore DENY should come before ALLOW
+* Default NACL allows all inbound and outbound traffic
+* Custom NACL by default denies all inbound and outbound traffic
+* A subnet can be associated with only one NACL and one NACL can be assigned to multiple subnets
+* NACLs are stateless unlike security groups
+* 2 public subnets are required to create a load balancer
+* VPC flow logs capture information about IP traffice going to and from the network interfaces in your VPC
+* Flow logs are stored in Cloudwatch logs
+* Flow logs can be created at VPC level, subnet level or network interface level
+* Flow logs cannot be enabled for VPCs that are peered with our VPC unless the peered VPCs belong to our AWS account
+* Flow logs cannot be tagged
+* Once a Flow log is created, its configuration cannot be changed
+* Not all traffic is monitored in VPC Flow log. Traffic not monitored include:
+  * DHCP traffice
+  * Traffic to and from Amazon DNS
+  * Traffic of Amzon Windows License activation
+  * Traffic to and from 169.254.169.254 for instance metadata
+  * Traffic to the reserved IP address for the default VPC router
+* A bastion host is a special purpose computer specially designed to withstand attacks. The computer usually hosts a single application, e.g. a proxy server, and all other services are removed or limited to reduce the threat to the computer. It is hardened in this manner primarily due to its location and purpose which is either on the outside of a firewall or in a demelitarized zone (DMZ) and usually involves access from untrusted networks or computers
+* A NAT Gateway is used to provide internet traffic to the private subnet
+* A Bastion host is used to administer the EC2 instances in the private subnet using SSH or RDP 
+* Direct Connect provides reliable, high throughput, dedicated and secure connection from the local data center to the AWS
+* VPC endpoints allow the VPC privately connect to the supported AWS services without leaving the AWS network
+* Two types of VPC Endpoints - Interface Endpoints & Gateway Endpoints
+* Interface endpoint is an elastic network interface with a private IP address that serves as an entrypoint for traffic destined to a supported service
+* On creation of a VPC a default route table, NACL and security group are automatically created. Subnets and Internet Gateways are not automatically created
+* US-East-1A in one AWS account can be completely different from US-East-1A in another AWS account
+* Traffic Flow - 
+  * Internet Gateway -> Router -> Route Table -> NACL -> Security Group -> NAT Instance -> EC2 in private subnet
+  * Internet Gateway -> Router -> Route Table -> NACL -> NAT Gateway -> EC2 in private subnet
+* Default NACL allows all outbound and inbound traffic
+* By default, each custom NACL denies all inbound and outbound traffic
+* Each subnet in a VPC must be associated with a NACL. I we don not assign an NACL with the subnet, the subnet will have the default NACL assigned
+* IP addresses can be blocked by NACL and NOT security groups
+
+## SQS
+
+* SQS is pull based, NOT push based
+* Messages are 256 KB in size
+* Messages can be kept in the queeu from 1 minute to 14 days; the default retention period is 4 days
+* Visibility Timeout is the amount of time that the message is invisible in the SQS queue after a reader picks up that message. If the message is processed successfully before the timeout expires, the message will be deleted from the queue. Otherwise, the message will again become visible after the timeout for another reader to pick it up for processing. This could result is message being delivered twice
+* Visibility Timeout maximum is 12 hours
+* Standard SQS guarantees that the message will be delivered at least once
+* SQS Long Polling API call doesn't return until a message arrives in the queue or the long poll times out. This result in less number of API calls and thus less cost
+* Standard queue lets us have a nearly unlimited number of transactions per second
+* Standard queue may deliver more than one copy of the same message
+* Standard queue provides best effort ordering; out of order delivery is possible
+* FIFO queue strictly preserves order
+* FIFO queue gurantees exactly-once delivery
+* FIFO queue is limited to 300 transactions per second
+* FIFO queues also support message groups that allow multiple ordered message groups within a single queue
+* It's a way to decouple infrastructure
+
+
+## SWF
+
+* Workflow service viz. human interaction
+* SWF workflow execution can last upto 1 year
+* SWF provides a task oriented API, whereas SQS peovides a message oriented API
+* Workflow Startes, Deciders, Activity Workers
+
+## SNS
+
+* Push notifications to mobile devices
+* SMS, email & HTTP endpoints
+* Push based delivery, no polling
+* Stored redundantly across multiple AZ
+* Supports multiple topics
+
+## API Gateway
+
+* Supports caching of API response
+* Allows enabling CORS to access multiple AWS resources with different origin name using Javascript
+* Allows logging result to CloudWatch
+* Allow throttling to prevent attacks
+* CORS is enforce by client's browser
+
+## Kinesis
+
+* Amazon alternative of Kafka
+* Streaming data
+* Types of Kinesis
+  * Kinesis Streams
+  * Kinesis Analytics
+  * Kinesis Firehose
+* Default retension period 24 hours
+* Maximum retention period 7 days
+* Kinesis Shard Read - 5 transactions per second upto a total data  rate of 2MB per second
+* Kinesis Shard Write - 1000 records per second upto a maximum data write of 1 MB per second
+* The total capacity of the stream is the sum of the capacities of its shards
+* Kinesis Streams have shards
+* Kinesis Firehose doesn't have a persistent store. As soon as the data comes in, the data needs to be processed optionally using Lambda functions and send it to the appropriate data stores
+
+## Cognito
+
+* User pool consists of user data like email, userid etc. It handles authentication, registration, recovery etc.
+* Identity pools are temporary IAM roles to access various AWS resources
+* Cognito uses push synchronizations and SNS notifications to push updates across devices
+* Cognito is an Identity broker which handles interaction between the AWS applications and the Web Id Provider
