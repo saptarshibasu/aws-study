@@ -99,13 +99,13 @@
 * **Glacier** - object == archive (upto 40 TB)
 * **Glacier** - bucket == vault
 * **Glacier** - Each vault has ONE vault policy & ONE lock policy
+  * **Vault Policy** - similar to bucket policy - restrict user access
+  * **Lock Policy** - immutable - once set cannot be changed
+    * WORM Policy - write once read many
+    * Forbid deleting an archive if it is less than 1 year
+* Earlier S3 **performance** would start degrading with 100 TPS
 * Files retrieved from **Glacier** will be stored in Reduced Redundancy Storage class for a specified number of days
 * For faster retrieval from **Glacier** based on Retrieval Policy, Capacity Units may need to be purchased
-* **Vault Policy** - similar to bucket policy - restrict user access
-* **Lock Policy** - immutable - once set cannot be changed
-  * WORM Policy - write once read many
-  * Forbid deleting an archive if it is less than 1 year
-* Earlier S3 **performance** would start degrading with 100 TPS
 * Historically the recommended approach is to have **random 4 characters** in front of the key name for better distribution of objects across partitions
 * **S3 & Glacier Select** - 
   * Allows to select a subset of rows and colums using SQL without retrieving the entire file
