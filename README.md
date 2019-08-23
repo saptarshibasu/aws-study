@@ -162,17 +162,17 @@
 ## Athena
 
 * **Serverless** service
-* Allows to do analytics directly on S3
-* Supports data formats CSV, JSON, ORC, Avro, Parquet (built on Presto)
-* Uses SQL Language to query the files
-* Good for analyzing VPC Flow Logs, ELB Logs etc.
+* Allows to do analytics directly on **S3**
+* Supports **data formats** CSV, JSON, ORC, Avro, Parquet (built on Presto)
+* Uses **SQL** to query the files
+* **Good for** analyzing VPC Flow Logs, ELB Logs etc.
 
 ## IAM
 
-* Global service
-* Users for individuals
-* User Groups for grouping users with similar permission requirements
-* Roles are for machines or internal AWS resources. One IAM Role for ONE application
+* **Global** service
+* **Users** for individuals
+* **User Groups** for grouping users with similar permission requirements
+* **Roles** are for machines or internal AWS resources. One IAM Role for ONE application
 
 ## EC2
 
@@ -306,10 +306,10 @@
 
 ## CloudWatch
 
-* CloudWatch is for monitoring performance, whereas CloudTrail is for auditing API calls
-* CloudWatch with EC2 will monitor events every 5 min by default. With detailed monitoring, the interval will be 1 min
+* CloudWatch is for monitoring performance, whereas **CloudTrail** is for auditing API calls
+* CloudWatch with EC2 will monitor events every 5 min by **default**. With detailed monitoring, the interval will be 1 min
 * CloudWatch alarms can be created to trigger notifications
-* Enabling CloudWatch logs for EC2
+* Enabling CloudWatch logs for **EC2**
   * Assign appropriate CloudWatch access policy to the IAM role
   * Install CloudWatch agent (awslogsd) in EC2
 
@@ -320,11 +320,11 @@
   * **AAAA**: URL to IPv6
   * **CNAME**: URL to URL
   * **Alias**: URL to AWS resource.
-* Prefer Alias over CNAME for AWS resources (for performance reasons)
+* Prefer **Alias** over CNAME for AWS resources (for performance reasons)
 * Route53 has advanced features such as:
-  * Load balancing (through DNS – also called client load balancing)
-  * Health checks (although limited…)
-  * Routing policy: **simple**, **failover**, **geolocation**, **geoproximity**, **latency**, **weighted**, **multivalue answer**
+  * **Load balancing** (through DNS – also called client load balancing)
+  * **Health checks** (although limited…)
+  * **Routing policy**: simple, failover, geolocation, geoproximity, latency, weighted, multivalue answer
 * IPv4 - 32 bit, IPv6 - 128 bit
 * **Simple Routing** - Multiple IP addresses against a single A record. Route 53 returs all of them in random order
 * **Wighted Routing** - A separate A record for each IP with a percentage weight. A separate health check can be associated with each IP or A record. SNS notification can be sent if a health check fails. If a health check fails, the server is removed from Route 53, until the health check passes
@@ -336,14 +336,27 @@
 
 ## RDS
 
-* Upto 5 Read Replicas (Async Replication - within AZ, cross AZ or cross Region)
-* Replication for Disaster Recovery is synchronous (across AZ - Automatic failover - DNS endpoint remains same) - Multi AZ
-* Replicas can be promoted to their own DB
-* Automated backups:
+* Upto 5 **Read Replicas** (Async Replication - within AZ, cross AZ or cross Region)
+* **Read replicas** of read replicas are possible
+* Each **read replica** will have its own DNS endpoint
+* **Read replica** can be created in a separate region as well
+* If a **read replica** is promoted to its own database, the replication will stop
+* **Read replica** cannot be enabled unless the automatic backups are also enabled
+* **Read replicas** themselves can be **Multi-AZ*** for disaster recovery
+* A failover in a **Multi-AZ** deployment can be forced by rebooting the DB
+* Two ways of improving performance
+  * Read replicas
+  * ElasticCache
+* **Replication** for Disaster Recovery is synchronous (across AZ - Automatic failover - DNS endpoint remains same) - Multi AZ
+* **Replicas** can be promoted to their own DB
+* Automated **backups**:
   * Daily full snapshot of the database
   * Capture transaction logs in real time
   * Ability to restore to any point in time
   * 7 days retention (can be increased to 35 days)
+* The **backup** data is stored in S3
+* Backups are taken during specified window. The application may experience elavated latency during **backup**
+* Restoring DB from automatic **backup** or snapshots always creates a new RDS instance with a new DNS endpoint
 * DB Snapshots:
   * Manually triggered by the user
   * Retention of backup for as long as we want
@@ -354,22 +367,8 @@
 * To connect using SSL:
   * Provide the SSL Trust certificate (can be download from AWS)
   * Provide SSL options when connecting to database
-* RDS, in general, is not serverless (except Aurora Serverless which is serverless)
-* We cannot access the RDS virtual machines. Patching the RDS operating system is Amazon's responsibility
-* The backup data is stored in S3
-* Backups are taken during specified window. The application may experience elavated latency during backup
-* Restoring DB from automatic backup or snapshots always creates a new RDS instance with a new DNS endpoint
-* Read replicas of read replicas are possible
-* Each read replica will have its own DNS endpoint
-* Read replica can be created in a separate region as well
-* If a read replica is promoted to its own database, the replication will stop
-* Read replica cannot be enabled unless the automatic backups are also enabled
-* Read replicas themselves can be Multi-AZ for disaster recovery
-* A failover in a Multi-AZ deployment can be forced by rebooting the DB
-* Two ways of improving performance
-  * Read replicas
-  * ElasticCache
-
+* RDS, in general, is **not serverless** (except Aurora Serverless which is serverless)
+* We cannot access the RDS **virtual machines**. Patching the RDS operating system is Amazon's responsibility
 
 ## DynamoDB
 
@@ -377,33 +376,33 @@
 * Stored on SSD storage
 * Spread across 3 geographically distributed data centers
 * Supports both Eventual Consistant Reads (Default) & Strongly Consistant Reads
-* Serverless service
+* **Serverless** service
 
 ## Redshift
 
-* Amazon's data warehouse solution
+* Amazon's **data warehouse** solution
 * Single node (160 GB) or multi node (leader node and compute node - upto 128 compute nodes)
-* Column based data store, column based compression techniques and multiple other compression techniques
+* **Column based** data store, column based compression techniques and multiple other compression techniques
 * No indexes or materialized views
-* Massively parallel processing
-* Redshift attempts to maintain 3 copies of data (the original and replica on the compute nodes and a backup in S3)
-* Available in only 1 AZ
-* Backup retention period is 1 day by default which can be extended to 35 days
-* Can asynchronously replicate to S3 in a different region for disaster recovery
+* Massively **parallel processing**
+* Redshift attempts to maintain **3 copies** of data (the original and replica on the compute nodes and a backup in S3)
+* Available in only **1 AZ**
+* **Backup** retention period is 1 day by default which can be extended to 35 days
+* Can asynchronously replicate to S3 in a different region for **disaster recovery**
 
 ## Aurora
 
-* Aurora storage automatically grows in increments of 10GB, up to 64 TB
-* Aurora can have 15 replicas while MySQL has 5, and the replication process is faster (sub 10 ms replica lag)
-* 2 copies of data is maintained in each AZ with a minimum of 3 AZ
-* Copute resources can scale upto 32 vCPUs and 244 GB of memory
+* Aurora **storage** automatically grows in increments of 10GB, up to 64 TB
+* Aurora can have 15 **replicas** while MySQL has 5, and the replication process is faster (sub 10 ms replica lag)
+* 2 copies of data is maintained in each **AZ** with a minimum of 3 AZ
+* Compute resources can scale upto 32 vCPUs and 244 GB of memory
 * Aurora can transparently handle the loss of 2 copies of data without affecting write availability and 3 copies of data without affecting read availability
-* Backups and snapshots does not impact database performance
+* **Backups** and snapshots does not impact database performance
 * Storage is self-healing. Disks and blocks are scanned for errors and repaired automatically
 * Aurora snapshots can be shared with other AWS accounts
-* Two types of replicas - MySQL replicas and Aurora Replicas
-* Automated failover is only possible with Aurora replicas
-* Failover in Aurora is instantaneous. It’s HA native
+* Two types of **replicas** - MySQL replicas (based on MySQL binlog) and Aurora Replicas
+* Automated **failover** is only possible with Aurora replicas (not MySQL replicas)
+* **Failover** in Aurora is instantaneous. It’s HA native
 
 ## ElasticCache
 
@@ -421,68 +420,68 @@
   
 ## VPC
 
-* VPC Flow Logs allows us to monitor the traffic within, in and out of your VPC (useful for security, performance, audit)
-* VPC are per Account per Region
-* Subnets are per VPC per AZ
-* Subnet doesn't span across AZ
-* Security Groups doesn't span across VPC
-* A VPC can have only 1 internet Gateway
-* Amazon reserves 5 IP in each subnet
-* Each EC2 instance performs source/destination checks by default. This means that the instance must be the source or destination of any traffic it sends or receives. However, a NAT instance must be able to send and receive traffic when the source or destination is not itself. Therefore, we must disable source/destination checks on the NAT instance
-* The public subnet must be configured to asign public IP addresses to the EC2 machines
-* NAT instace / gateway must be in public subnet
-* A route from private subnet to NAT Gateway is important
-* NAT instance must have a security group
-* NAT Gateway Redundant inside an AZ
-* NAT Gateway starts at 5 Gbps and scales upto 45 Gbps
-* NAT Gateway don't need a security group
-* NAT Gateway automatically have a public IP assigned
-* With NAT Gateway there is no need to disable source / destination checks
-* Create a NAT Gateway in each AZ and configure the route to use the NAT Gateway in the same AZ
-* NACL is evaluated before security groups
-* NACL's rules are executed in chronological order with lowest numbered rule evaluated first. Therefore DENY should come before ALLOW
-* Default NACL allows all inbound and outbound traffic
-* Custom NACL by default denies all inbound and outbound traffic
-* A subnet can be associated with only one NACL and one NACL can be assigned to multiple subnets
-* NACLs are stateless unlike security groups
-* 2 public subnets are required to create a load balancer
-* VPC flow logs capture information about IP traffice going to and from the network interfaces in your VPC
-* Flow logs are stored in Cloudwatch logs
-* Flow logs can be created at VPC level, subnet level or network interface level
-* Flow logs cannot be enabled for VPCs that are peered with our VPC unless the peered VPCs belong to our AWS account
-* Flow logs cannot be tagged
-* Once a Flow log is created, its configuration cannot be changed
-* Not all traffic is monitored in VPC Flow log. Traffic not monitored include:
+* VPC **Flow Logs** allows us to monitor the traffic within, in and out of your VPC (useful for security, performance, audit)
+* VPC are per Account per **Region**
+* Subnets are per VPC per **AZ**
+* Subnet doesn't span across **AZ**
+* **Security Groups** doesn't span across VPC
+* A VPC can have only 1 **internet Gateway**
+* Amazon reserves 5 **IP** in each subnet
+* Each EC2 instance performs source/destination checks by default. This means that the instance must be the source or destination of any traffic it sends or receives. However, a **NAT** instance must be able to send and receive traffic when the source or destination is not itself. Therefore, we must disable source/destination checks on the NAT instance
+* **NAT** instace / gateway must be in public subnet
+* A route from private subnet to **NAT** Gateway is important
+* **NAT** instance must have a security group
+* **NAT** Gateway is redundant inside an AZ
+* **NAT** Gateway starts at 5 Gbps and scales upto 45 Gbps
+* **NAT** Gateway don't need a security group
+* **NAT** Gateway automatically have a public IP assigned
+* With **NAT** Gateway there is no need to disable source / destination checks
+* Create a **NAT** Gateway in each AZ and configure the route to use the NAT Gateway in the same AZ
+* The public subnet must be configured to asign public **IP** addresses to the EC2 machines
+* **NACL** is evaluated before security groups
+* **NACL's** rules are executed in chronological order with lowest numbered rule evaluated first. Therefore DENY should come before ALLOW
+* Default **NACL** allows all inbound and outbound traffic
+* Custom **NACL** by default denies all inbound and outbound traffic
+* A subnet can be associated with only one **NACL** and one NACL can be assigned to multiple subnets
+* **NACLs** are stateless unlike security groups
+* Default **NACL** allows all outbound and inbound traffic
+* By default, each custom **NACL** denies all inbound and outbound traffic
+* Each subnet in a VPC must be associated with a **NACL**. If we do not assign an NACL with the subnet, the subnet will have the default NACL assigned
+* IP addresses can be blocked by **NACL** and NOT security groups
+* 2 public subnets are required to create a **load balancer**
+* VPC **flow logs** capture information about IP traffic going to and from the network interfaces in the VPC
+* **Flow logs** are stored in Cloudwatch logs
+* **Flow logs** can be created at VPC level, subnet level or network interface level
+* **Flow logs** cannot be enabled for VPCs that are peered with our VPC unless the peered VPCs belong to our AWS account
+* **Flow logs** cannot be tagged
+* Once a **Flow log** is created, its configuration cannot be changed
+* Not all traffic is monitored in VPC **Flow log**. Traffic not monitored include:
   * DHCP traffice
   * Traffic to and from Amazon DNS
   * Traffic of Amzon Windows License activation
   * Traffic to and from 169.254.169.254 for instance metadata
   * Traffic to the reserved IP address for the default VPC router
-* A bastion host is a special purpose computer specially designed to withstand attacks. The computer usually hosts a single application, e.g. a proxy server, and all other services are removed or limited to reduce the threat to the computer. It is hardened in this manner primarily due to its location and purpose which is either on the outside of a firewall or in a demelitarized zone (DMZ) and usually involves access from untrusted networks or computers
-* A NAT Gateway is used to provide internet traffic to the private subnet
-* A Bastion host is used to administer the EC2 instances in the private subnet using SSH or RDP 
+* A **bastion host** is a special purpose computer specially designed to withstand attacks. The computer usually hosts a single application, e.g. a proxy server, and all other services are removed or limited to reduce the threat to the computer. It is hardened in this manner primarily due to its location and purpose which is either on the outside of a firewall or in a demelitarized zone (DMZ) and usually involves access from untrusted networks or computers
+* A **NAT** Gateway is used to provide internet traffic to the private subnet
+* A **Bastion host** is used to administer the EC2 instances in the private subnet using SSH or RDP 
 * Direct Connect provides reliable, high throughput, dedicated and secure connection from the local data center to the AWS
-* VPC endpoints allow the VPC privately connect to the supported AWS services without leaving the AWS network
-* Two types of VPC Endpoints - Interface Endpoints & Gateway Endpoints
-* Interface endpoint is an elastic network interface with a private IP address that serves as an entrypoint for traffic destined to a supported service
-* On creation of a VPC a default route table, NACL and security group are automatically created. Subnets and Internet Gateways are not automatically created
+* **VPC endpoints** allow the VPC to privately connect to the supported AWS services without leaving the AWS network. Two types of VPC Endpoints - 
+  * **Interface Endpoints** - An elastic network interface with a private IP address that serves as an entrypoint for traffic destined to a supported service
+  * **Gateway Endpoints** - Only for S3 and DynamoDB
+* On creation of a VPC, a default route table, NACL and security group are automatically created. Subnets and Internet Gateways are not automatically created
 * US-East-1A in one AWS account can be completely different from US-East-1A in another AWS account
-* Traffic Flow - 
+* **Traffic Flow** - 
   * Internet Gateway -> Router -> Route Table -> NACL -> Security Group -> NAT Instance -> EC2 in private subnet
   * Internet Gateway -> Router -> Route Table -> NACL -> NAT Gateway -> EC2 in private subnet
-* Default NACL allows all outbound and inbound traffic
-* By default, each custom NACL denies all inbound and outbound traffic
-* Each subnet in a VPC must be associated with a NACL. I we don not assign an NACL with the subnet, the subnet will have the default NACL assigned
-* IP addresses can be blocked by NACL and NOT security groups
-* To be able to SSH into an EC2 system in a ublic subnet of a custom VPC, following are required
-  * An internet gateway should be assigned to the VPC
-  * The public subnets should be associated with a custom route table should have a route that will allow destination to everywhere (0.0.0.0/0) through the internet gateway
-* Private subnets should be associated with a custom NACL that allows traffic to and from the public subnets (atleast SSH & ICMP) and internet (for NAT Gateway to work)
-* Private subnet should be associated with a route table that route all internet traffic (0.0.0.0/0) to the NAT Gateway
+* To be able to SSH into an EC2 system in a public subnet of a custom VPC, following are required
+  * An **internet gateway** should be assigned to the VPC
+  * The **public subnets** should be associated with a custom route table that should have a route that will allow destination to everywhere (0.0.0.0/0) through the internet gateway
+* **Private subnets** should be associated with a custom NACL that allows traffic to and from the public subnets (atleast SSH & ICMP) and internet (for NAT Gateway to work)
+* **Private subnet** should be associated with a route table that route all internet traffic (0.0.0.0/0) to the NAT Gateway
 
 ## SQS
 
-* SQS is pull based, NOT push based
+* SQS is **pull based**, NOT push based
 * Messages are 256 KB in size
 * Messages can be kept in the queeu from 1 minute to 14 days; the default retention period is 4 days
 * Visibility Timeout is the amount of time that the message is invisible in the SQS queue after a reader picks up that message. If the message is processed successfully before the timeout expires, the message will be deleted from the queue. Otherwise, the message will again become visible after the timeout for another reader to pick it up for processing. This could result is message being delivered twice
