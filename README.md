@@ -176,19 +176,21 @@
 
 ## EC2
 
-* Security Groups are for network security
-* Security groups are locked down to a region / VPC combination
-* One security group can be attached to multiple EC2 instances
-* Multiple security groups can be assigned to a single EC2 instance
-* If connection to application times out, it could be a security group issue
-* If connection is refused, it's an application issue
-* All inbound traffic is blocked by default
-* all outbound traffic is authorized by default
-* Security Groups can refer to other Security Groups
-* Elastic IP gives a fixed IP to an EC2 instance across restarts
-* By default one AWS account can have 5 elastic IP
-* Prefer load balancer over Elastic IP
-* EC2 User Data script runs once (with root privileges) at the instance first start
+* **Security Groups** are for network security
+* **Security group**s are locked down to a region / VPC combination
+* **Security Groups** can refer to other Security Groups
+* One **security group** can be attached to multiple EC2 instances
+* Multiple **security groups** can be assigned to a single EC2 instance
+* If connection to application times out, it could be a **security group** issue. If connection is refused, it's an application issue
+* **Security Group** - All inbound traffic is blocked by default
+* **Security Group** - All outbound traffic is authorized by default
+* **Security Groups** are stateful - if the inbound traffic on a port is allowed, outbound traffic on the same port is automatically allowed
+* Change in **security group** takes effect immediately
+* **Security groups** cannot blacklist an IP or port. Everything is blocked by default, we need to specifically open ports
+* **Elastic IP** gives a fixed IP to an EC2 instance across restarts
+* By default one AWS account can have 5 **elastic IP**
+* Prefer load balancer over **Elastic IP**
+* EC2 **User Data** script runs once (with root privileges) at the instance first start
 * EC2 Launch types - 
   * **On-demand instances** - short workload, predictable pricing
   * **Reserved instances** - long workload (>= 1 year)
@@ -197,115 +199,110 @@
   * **Spot instances** - short workload, cheap, can lose instances, good for batch jobs, big data analytics etc.
   * **Dedicated instances** - no other customer will share the hardware, but instances from same AWS account can share hardware, no control on instance placement
   * **Dedicated hosts** - the entire server is reserved, provides more control on instance placement, more visibility into sockets and cores, good for "bring your own licenses", complicated regulatory needs
-* Billing by second with a minimum of 60 seconds
-* A custom AMI can be created with pre-installed software packages, security patches etc. instead of writing user data scripts, so that the boot time is less during autoscaling
-* AMIs are built for a specific region, but can be copied across regions
-* T2/T3 are burstable instances. Spikes are handled using burst credits that are accumulated over time. If burst credits are all consumed, performance will suffer
-* M instance types are balanced
-* Change in security group takes effect immediately
-* Security groups are stateful and thus when an inbound rule is created the security group also allows the traffic out
-* Access Control Lists are stateles and hence both inbound and outbound rules need to be created
-* Security groups cannot blacklist an IP or port. Everything is blocked by default, we need to specifically open ports
-* `http://169.254.169.254/latest/user-data/` gives user data scripts
-* `http://169.254.169.254/latest/meta-data/` gives meta data
-* `http://169.254.169.254/latest/meta-data/public-ipv4/` gives public IP
-* `http://169.254.169.254/latest/meta-data/local-ipv4/` gives local IP
-* Two types of placement groups
-  * Clustered Placement Group - Grouping of instances within a single AZ. Recommended for applications that need low network latency and high network throughput. Only certain instances can be launched in this placement group. It cannot spac multiple AZ
-  * Spread Placement Group - Instances are placed in distinct hardware. Recommended for applications that have a small number of critical instances that should be kept separate from each other. It can span multiple AZ
-* The instances within a placement group should be homogeneous
-* Existing instances can't be moved into a placement group
-* Placement groups can't be merged
+* **Billing** by second with a minimum of 60 seconds
+* A custom **AMI** can be created with pre-installed software packages, security patches etc. instead of writing user data scripts, so that the boot time is less during autoscaling
+* **AMIs** are built for a specific region, but can be copied across regions
+* T2/T3 are **burstable** instances. Spikes are handled using burst credits that are accumulated over time. If burst credits are all consumed, performance will suffer
+* **M instance types** are balanced
+* `http://169.254.169.254/latest/user-data/` gives **user data** scripts
+* `http://169.254.169.254/latest/meta-data/` gives **meta data**
+* `http://169.254.169.254/latest/meta-data/public-ipv4/` gives **public IP**
+* `http://169.254.169.254/latest/meta-data/local-ipv4/` gives **local IP**
+* Two types of **placement groups**
+  * **Clustered Placement Group** - Grouping of instances within a single AZ. Recommended for applications that need low network latency and high network throughput. Only certain instances can be launched in this placement group. It cannot spac multiple AZ
+  * **Spread Placement Group** - Instances are placed in distinct hardware. Recommended for applications that have a small number of critical instances that should be kept separate from each other. It can span multiple AZ
+* The instances within a **placement group** should be homogeneous
+* Existing instances can't be moved into a **placement group**
+* **Placement groups** can't be merged
 
 ## EFS
 
-* Supports Network File System version 4 (NFSv4)
-* Read after write consistency
-* Data is stored across multiple AZ's within a region
-* No pre-provisioning required
+* Supports Network File System version 4 (**NFSv4**)
+* **Read after write** consistency
+* Data is stored across **multiple AZ's** within a region
+* **No pre-provisioning** required
 * To use EFS
-  * install amazon-efs-utils
-  * mount the EFS at the appropriate location
+  * install **amazon-efs-utils**
+  * **mount** the EFS at the appropriate location
 
 ## ELB
   
 * **ELB types** - 
-  * Classic Load Balancer (V1 - old generation)
-  * Application Load Balancer (V2 - new generation) - Layer 7 - application aware
-  * Network Load Balancer (V2 - new generation) - Layer 4 - extreme performance
+  * **Classic Load Balancer** (V1 - old generation) - Lower cost than ALB, but less flexibility
+  * **Application Load Balancer** (V2 - new generation) - Layer 7 - application aware
+  * **Network Load Balancer** (V2 - new generation) - Layer 4 - extreme performance
 * ELB provides **health check** for instances
 * **ALB** can handle **multiple applications** where each application has a traget group and load for that application is balanced across instances within the particular target group
 * ALB supports **HTTP/HTTPS** & **Websocket** protocols
 * ALB - True IP, port and protocol details of the client are inserted in HTTP headers - **X-Forwarded-For**, **X-Forwarded-Port** and **X-Forwarded-Proto** respectively
-* ALB can route based on hostname in URL and route in URL
-* Network Load Balancers are mostly used for extreme performance and should not be the default load balancer
-* Network Load Balancers have less latency ~100 ms (vs 400 ms for ALB)
-* Load Balancers have static host name. DO NOT resolve & use underlying IP
+* ALB can **route** based on hostname in URL and route in URL
+* **Network Load Balancers** are mostly used for extreme performance and should not be the default load balancer
+* **Network Load Balancers** have less latency ~100 ms (vs 400 ms for ALB)
+* Load Balancers have **static host name**. DO NOT resolve & use underlying IP
 * LBs can scale but not instantaneously – contact AWS for a “warm-up”
-* ELBs do not have a predefined IPv4 address. We resolve to them using a DNS name
-* 504 error means the gateway has timed out and it is an application issue and NOT a load balancer issue
-* Sticky session - required if the ec2 instance is writing a file to the local disk. traffice will not got tot other ec2 instances for the session
-* Cross zone load balancing - if one AZ does not receive any traffic
-* Path Patterns - allows to route traffic based on the URL patterns
+* ELBs do not have a predefined IPv4 address. We resolve to them using a **DNS name**
+* **504 error** means the gateway has timed out and it is an application issue and NOT a load balancer issue
+* **Sticky session** - required if the ec2 instance is writing a file to the local disk. Traffic will not go to other ec2 instances for the session
+* **Cross zone load balancing** - If one AZ does not receive any traffic
+* **Path Patterns** - Allows to route traffic based on the URL patterns
 
 ## Auto Scaling Group
 
-* Auto scaling group is configured to register new instances to a traget group of ELB
-* IAM role attached to the ASG will get assigned to the instances
-* If instance gets terminated, ASG will restart it
-* If instance is marked as unhealthy by load balancer, ASG will restart it
-* ASG can scale based on CloudWatch alarms
-* ASG can scale based on custom metric sent by applications to CloudWatch
-* If all subnets in different availability zones are selected, the ASG will distribute the instances across multiple AZ
-* During the configured warm up period the EC2 instance will not contribute to the auto scaling metrics
-* Scaling out in increasing the number of instances and scaling up is increasing the resources
+* Auto scaling group is configured to register new instances to a traget group of **ELB**
+* **IAM role** attached to the ASG will get assigned to the instances
+* If instance gets **terminated**, ASG will restart it
+* If instance is marked as **unhealthy** by load balancer, ASG will restart it
+* ASG can scale based on **CloudWatch alarms**
+* ASG can scale based on **custom metric** sent by applications to CloudWatch
+* If all subnets in different **availability zones** are selected, the ASG will distribute the instances across multiple AZ
+* During the configured warm up period the EC2 instance will not contribute to the **auto scaling metrics**
+* **Scaling out** is increasing the number of instances and **scaling up** is increasing the resources
 
 ## EBS
 
 * An EBS volume is a **network drive**
-* An EC2 machine by default loses its root volume when terminated
-* It's locked to an AZ. To move a volume to a different AZ, a snapshot needs to be created
+* An EC2 machine by default loses its **root volume** when terminated
+* It's locked to an **AZ**. To move a volume to a different AZ, a snapshot needs to be created
 * EBS Volume types:
   * **General Purposse SSD (GP2)** - General purpose SSD volume
   * **Provisioned IOPS SSD (IO1)** - Highest-performance SSD volume for mission-critical low-latency or high throughput workloads. Good for Databases.
   * **Throughput Optimized HDD (ST1)** - Low cost HDD volume designed for frequently accessed, throughput intensive workloads. Good for big data and datawarehouses
   * **Cold HDD (SC1)** - Lowest cost HDD volume designed for less frequently accessed workloads. Good for file servers
   * **EBS Magnetic HDD (Standard)** - Previous generation HDD. For workloads where data is infrequently accessed
-* The size and IOPS (only for IO1) can be increased
-* Increasing the size of the volume does not automatically increase the size of the partition
-* EBS volumes can be backed up using snapshots
-* Snapshots are also used to resizing a volume down, changing the volume type and encrypting a volume
-* Snapshots occupy only the size of data
-* EBS Encryption leverages keys from KMS (AES-256)
-* Copying an unencrypted snapshot allows encryption
-* All the data in flight moving between the instance and an encrypted volume is encrypted
-* EBS backups use IO and hence backups should be taken during off-peak hours
-* Each EBS volume is automatically replicated within its own AZ to protect from component failure and provide high availability and durability
-* EC2 instance and its volume are going to be in the same AZ
-* Migrating EBS to a different AZ or Region
-  * Create a snapshot
-  * Create an AMI
-  * Launch an EC2 instance in a different AZ with the AMI
-  * Copy the AMI to a different Region
-  * Launch an EC2 instance in a different Region with the AMI
-* The size and type of the EBS volumes can be changed without even stopping the EC2 instance
-* Snapshots exist on S3
-* Snapshots are incremental
-* To take a snapshot of the root device, the instance needs to be stopped
-* AMI can be created directly from the volume as well
-* AMI root device storage can be
+* The size and IOPS (**only for IO1**) can be increased
+* Increasing the size or the volume does not automatically increase the **size of the partition**
+* EBS volumes can be backed up using **snapshots**
+* **Snapshots** are also used to resizing a volume down, changing the volume type and encrypting a volume
+* **Snapshots** occupy only the size of data
+* **Snapshots** exist on S3
+* **Snapshots** are incremental
+* **Snapshots** can be shared, but only if they are unencrypted
+* **Snapshots** of encrypted volumes are always encrypted
+* Volumes restored from encrypted **snapshots** are encrypted automatically
+* To take a **snapshot** of the root device, the instance needs to be stopped
+* Copying an unencrypted **snapshot** allows encryption
+* EBS **Encryption** leverages keys from KMS (AES-256)
+* All the data in flight moving between the instance and an encrypted volume is **encrypted**
+* Encryption of a root volume involves following steps, 
+  * Take a **snapshot**
+  * Copy the **snapshot** and choose the ecryption option (Once encrypted, it cannot be uncrypted by again making a copy)
+  * Create an Image (**AMI**) from the encrypted snapshot
+* EBS **backups** use IO and hence backups should be taken during off-peak hours
+* Each EBS volume is automatically **replicated** within its own AZ to protect from component failure and provide high availability and durability
+* EC2 instance and its volume are going to be in the same **AZ**
+* Migrating EBS to a different **AZ or Region** involves the following steps
+  * Create a **snapshot**
+  * Create an **AMI**
+  * Copy the **AMI** to a different Region
+  * Launch an **EC2 instance** in a different Region with the AMI
+* The **size and type** of the EBS volumes can be changed without even stopping the EC2 instance
+* **AMI** can be created directly from the volume as well
+* **AMI** root device storage can be
   * Instance Store (Ephemeral Stores)
   * EBS Backed Volumes
-* Instance store volumes are created from a template stored in Amazon S3
-* Instance stores are attached to the host where the EC2 is running, whereas EBS volumes are network volumes. However, in 90% of the use cases the difference in latency with the two types of stores does not make any difference
-* Throughput = IOPS * I/O size. The I/O size is 256KB (earlier 16KB). If the IOPS provisioned is 500, the instance can achieve 500 256KB writes per second
-* To encrypt a root volume, 
-  * Take a snapshot
-  * Copy the snapshot and choose the ecryption option (Once encrypted, it cannot be uncrypted by again making a copy)
-  * Create an Image (AMI) from the encrypted snapshot
-* Snapshots of encrypted volumes are always encrypted
-* Volumes restored from encrypted snapshots are encrypted automatically
-* Snapshots can be shared, but only if they are unencrypted
+* **Instance store** volumes are created from a template stored in Amazon S3
+* **Instance stores** are attached to the host where the EC2 is running, whereas EBS volumes are network volumes. However, in 90% of the use cases the difference in latency with the two types of stores does not make any difference
+* Throughput = IOPS * I/O size. The I/O size is 256KB (earlier 16KB). If the IOPS provisioned is 500, the instance can achieve 500 * 256KB writes per second
 
 ## CloudWatch
 
