@@ -266,9 +266,23 @@
 * EBS Volume types:
   * **General Purposse SSD (GP2)** - General purpose SSD volume
   * **Provisioned IOPS SSD (IO1)** - Highest-performance SSD volume for mission-critical low-latency or high throughput workloads. Good for Databases.
-  * **Throughput Optimized HDD (ST1)** - Low cost HDD volume designed for frequently accessed, throughput intensive workloads. Good for big data and datawarehouses
-  * **Cold HDD (SC1)** - Lowest cost HDD volume designed for less frequently accessed workloads. Good for file servers
+  * **Throughput Optimized HDD (ST1)** - Low cost HDD volume designed for **frequently accessed**, throughput intensive workloads. Good for big data and datawarehouses
+  * **Cold HDD (SC1)** - Lowest cost HDD volume designed for **less frequently** accessed workloads. Good for file servers
   * **EBS Magnetic HDD (Standard)** - Previous generation HDD. For workloads where data is infrequently accessed
+* **RAID 0**
+  * Striping in multiple disk volumes
+  * When I/O performance is more important than fault tolerance
+  * Loss of a single volume results in complete data loss
+* **RAID 1**
+  * When fault tolerance is more important than I/O performance
+  * Even in the absence of RAID 1, EBS is already replicated within AZ
+* **Max IOPS/Volume**
+  * io1 - 64,000 (based on 16K I/O size)
+  * gp2 - 16,000 (based on 16K I/O size)
+  * st1 - 500 (based on 1 MB I/O size)
+  * sc1 - 250 (based on 1 MB I/O size)
+* SSD is good for short random access. HDD is good for heavy sequential access
+* SSD provides high IOPS (np. of read-write per second). HDD provides high throughput (no. of bits read/written per second)
 * The size and IOPS (**only for IO1**) can be increased
 * Increasing the size or the volume does not automatically increase the **size of the partition**
 * EBS volumes can be backed up using **snapshots**
@@ -303,15 +317,20 @@
 * **Instance store** volumes are created from a template stored in Amazon S3
 * **Instance stores** are attached to the host where the EC2 is running, whereas EBS volumes are network volumes. However, in 90% of the use cases the difference in latency with the two types of stores does not make any difference
 * Throughput = IOPS * I/O size. The I/O size is 256KB (earlier 16KB). If the IOPS provisioned is 500, the instance can achieve 500 * 256KB writes per second
+* EBS Optimized Instances - With small additional fee, customers can launch certain Amazon EC2 instance types as EBS-optimized instances. EBS-optimized instances enable EC2 instances to fully use the IOPS provisioned on an EBS volume. Contention between Amazon EBS I/O and other traffic from the EC2 instance is minimized
 
 ## CloudWatch
 
 * CloudWatch is for monitoring performance, whereas **CloudTrail** is for auditing API calls
-* CloudWatch with EC2 will monitor events every 5 min by **default**. With detailed monitoring, the interval will be 1 min
+* CloudWatch with EC2 will monitor events every 5 min by default. With **detailed monitoring**, the interval will be 1 min
 * CloudWatch alarms can be created to trigger notifications
 * Enabling CloudWatch logs for **EC2**
   * Assign appropriate CloudWatch access policy to the IAM role
   * Install CloudWatch agent (awslogsd) in EC2
+* Since AWS does not have access to the  underlying OS, some metrics are **missing** including disk and memory utilization
+* CloudWatch can collect metrics and logs from services, resources and applications on AWS as well on-premise services
+* CloudWatch Alarms can be created to send notifications or do autoscaling when a certain metrics satisfies a configured condition
+* CloudWatch Events allow the user to configure a Lambda function to be triggered on certain system events viz. launch of EC2 instance in an ASG
 
 ## Route 53
   
@@ -372,10 +391,10 @@
 
 ## DynamoDB
 
-* Supports both document and key-value data model
-* Stored on SSD storage
-* Spread across 3 geographically distributed data centers
-* Supports both Eventual Consistant Reads (Default) & Strongly Consistant Reads
+* Supports both **document and key-value** data model
+* Stored on **SSD storage**
+* **Spread across** 3 geographically distributed data centers
+* Supports both **Eventual Consistant** Reads (Default) & **Strongly Consistant** Reads
 * **Serverless** service
 
 ## Redshift
@@ -408,12 +427,12 @@
 
 * ElastiCache is to get managed Redis or Memcached
 * ElasticCache features - 
-  * Write Scaling using sharding
-  * Read Scaling using Read Replicas
-  * Multi AZ with Failover Capability
-* Redis - Multi AZ, Backups and restore
+  * Write Scaling using **sharding**
+  * Read Scaling using **Read Replicas**
+  * **Multi AZ** with Failover Capability
+* Redis - Multi AZ, **Backups and restore**
 * Memcached - Multi threaded, horizontal scaling
-* Elastic cache can be used as - db cache, session store
+* Elastic cache can be used as - **db cache**, **session store**
 * Caching patterns - 
   * Write through
   * Lazy loading
@@ -478,6 +497,9 @@
   * The **public subnets** should be associated with a custom route table that should have a route that will allow destination to everywhere (0.0.0.0/0) through the internet gateway
 * **Private subnets** should be associated with a custom NACL that allows traffic to and from the public subnets (atleast SSH & ICMP) and internet (for NAT Gateway to work)
 * **Private subnet** should be associated with a route table that route all internet traffic (0.0.0.0/0) to the NAT Gateway
+* VPC **peering** connection does not support edge to edge routing
+* A Corporare network can be connected to a VPC using a VPN over the internet or a VPN over AWS Direct Connect
+* Using AWS Direct Connect, a dedicated network connection between the AWS VPC and corporate network can be established
 
 ## SQS
 
@@ -543,3 +565,28 @@
 * Identity pools are temporary IAM roles to access various AWS resources
 * Cognito uses push synchronizations and SNS notifications to push updates across devices
 * Cognito is an Identity broker which handles interaction between the AWS applications and the Web Id Provider
+
+## AWS OpsWorks
+
+* Managed **configuration management** system
+* Provides managed instancess of **Chef** and **Puppet**
+
+## CodeDeploy
+
+* **EC2/on-premise Deployment Configuration**
+  * All At Once
+    * In-place deployments - Deployment in all the EC2 instances will be done at the same time
+    * Blue-Green deployments - A replacement environment will be created and the triffic will be moved from the old to the new environment all at once
+  * Half At A Time
+    * In-place deployments - self explanatory
+    * Blue-Green deployments - self explanatory
+  * One At A Time
+    * In-place deployments - self explanatory
+    * Blue-Green deployments - self explanatory
+
+* **Lambda Deployment Configuration**
+  * **Canary** - Traffic is shifted to the new Lambda version in two increments. The percentage of traffic and the time interval between the increments are configurable
+  * **Linear** - Traffic is shifted to the new Lambda version in equal increments with equal number of minutes between each increment. The percentage of traffic in each increment and the time interval between each increment are configurable
+  * **All at once** - Traffic is shifted to the new Lambda version all at once
+
+
