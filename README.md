@@ -112,6 +112,12 @@
   * Joins and subqueries not allowed
   * Files can be compressed with GZIP or BZIP2
   * Works with file format CSV, JSON, Parquet
+* Amazon S3 Glacier automatically encrypts data at rest using Advanced Encryption Standard (AES) 256-bit symmetric keys
+* To host a static website the S3 bucket will have the same name as the domain or subdomain
+* S3 notification feature enables the user to receive notifications when certain events happen in a bucket. S3 supports following destinations
+  * Amazon SNS
+  * Amazon SQS
+  * AWS Lambda
 
 ## Cloudfront
 
@@ -124,6 +130,7 @@
 * **S3 bucket policy** gives access to OAI and thus preventing users from directly accessing the S3 files bypassing the Cloudfront
 * Cloudfront **accesslogs** can be stored in an S3 bucket
 * To serve the media of a WordPress website from Cloudfront use the Apache .htaccess file to rewrite the URLs
+* Supports SNI (Server Name Indication). This allows Cloudfront distributions to support multiple TLS certificates
 
 ## Snowball
 
@@ -133,6 +140,7 @@
   * Can be **Storage Optimized (24 vCPU)** or **Compute Optimized (52 vCPU) & optional GPU**
   * Allows processing **on the go**
   * Useful for IoT capture, machine learning, data migration, image collation etc.
+* An 80 TB Snowball appliance and 100 TB Snowball Edge appliance only have 72 TB and 83 TB of usable capacity respectively
 
 ## Snowmobile
 
@@ -158,6 +166,7 @@
   * **Stored Volume** - Entire dataset in premise with scheduled backups in S3
 * **Tape Gateway** - 
   * Backup from on premise **tape to S3 Glacier** using **iSCSI protocol**
+* By default, Storage Gateway uses Amazon S3-Managed Encryption Keys (SSE-S3) to server-side encrypt all data it stores in Amazon S3
 
 ## Athena
 
@@ -214,6 +223,9 @@
 * The instances within a **placement group** should be homogeneous
 * Existing instances can't be moved into a **placement group**
 * **Placement groups** can't be merged
+* AWS AMI Virtualization types - 
+  * Paravirtual (PV)
+  * Hardware Virtual Machine (HVM) - Amazon recommends
 
 ## EFS
 
@@ -233,9 +245,10 @@
   * **Network Load Balancer** (V2 - new generation) - Layer 4 - extreme performance
 * ELB provides **health check** for instances
 * **ALB** can handle **multiple applications** where each application has a traget group and load for that application is balanced across instances within the particular target group
-* ALB supports **HTTP/HTTPS** & **Websocket** protocols
-* ALB - True IP, port and protocol details of the client are inserted in HTTP headers - **X-Forwarded-For**, **X-Forwarded-Port** and **X-Forwarded-Proto** respectively
-* ALB can **route** based on hostname in URL and route in URL
+* **ALB** supports HTTP/HTTPS & Websocket protocols
+* **ALB** - True IP, port and protocol details of the client are inserted in HTTP headers - X-Forwarded-For, X-Forwarded-Port and X-Forwarded-Proto respectively
+* **ALB** can route based on hostname in URL and route in URL
+* **ALB** supports SNI (Server Name Indication). This allows ALB to support multiple TLS certificates
 * **Network Load Balancers** are mostly used for extreme performance and should not be the default load balancer
 * **Network Load Balancers** have less latency ~100 ms (vs 400 ms for ALB)
 * Load Balancers have **static host name**. DO NOT resolve & use underlying IP
@@ -257,6 +270,8 @@
 * If all subnets in different **availability zones** are selected, the ASG will distribute the instances across multiple AZ
 * During the configured warm up period the EC2 instance will not contribute to the **auto scaling metrics**
 * **Scaling out** is increasing the number of instances and **scaling up** is increasing the resources
+* The cooldown period helps to ensure that the Auto Scaling group doesn't launch or terminate additional instances before the previous scaling activity takes effect
+* The default cooldown period is 300 seconds
 
 ## EBS
 
@@ -318,6 +333,12 @@
 * **Instance stores** are attached to the host where the EC2 is running, whereas EBS volumes are network volumes. However, in 90% of the use cases the difference in latency with the two types of stores does not make any difference
 * Throughput = IOPS * I/O size. The I/O size is 256KB (earlier 16KB). If the IOPS provisioned is 500, the instance can achieve 500 * 256KB writes per second
 * EBS Optimized Instances - With small additional fee, customers can launch certain Amazon EC2 instance types as EBS-optimized instances. EBS-optimized instances enable EC2 instances to fully use the IOPS provisioned on an EBS volume. Contention between Amazon EBS I/O and other traffic from the EC2 instance is minimized
+* Amazon Data Lifecycle Manager (Amazon DLM) automates the creation, deletion and retention of EBS snapshots
+* Improving I/O performance
+  - Use RAID 0
+  - Increase size of EC2 instance
+  - Use appropriate volume types
+  - Enhanced Networking feature can provide higher I/O performance and lower CPU utilization to the EC2 instance. However, HVM AMI instead of PV AMI is required
 
 ## CloudWatch
 
@@ -396,6 +417,7 @@
 * **Spread across** 3 geographically distributed data centers
 * Supports both **Eventual Consistant** Reads (Default) & **Strongly Consistant** Reads
 * **Serverless** service
+* Amazon DynamoDB Accelerator (DAX) is a fully managed, highly available, in-memory cache that can reduce Amazon DynamoDB response times from milliseconds to microseconds
 
 ## Redshift
 
@@ -500,25 +522,38 @@
 * VPC **peering** connection does not support edge to edge routing
 * A Corporare network can be connected to a VPC using a VPN over the internet or a VPN over AWS Direct Connect
 * Using AWS Direct Connect, a dedicated network connection between the AWS VPC and corporate network can be established
+* **ENI** - ENI (Elastic Network Interface) is attached to a subnet of VPC
+* **ENI** - ENI has IP and security groups attached
+* **ENI** - All EC2 instances have a primary ENI. Additional ENIs can be 
+* **ENI** - ENI can be used to design low cost high availability by reassigning the ENI to a new EC2 instance when the original instance fails
+* **ENI** - Attach termminology
+  * **Hot Attach** - When the instance is running
+  * **Warm Attach** - When the instance is stopped
+  * **Cold Attach** - When the instance is being launched
+* **Backup & Recovery** strategies
+  * **Backup & Restore** - Low cost DR approach backs up your data and applications from anywhere to the AWS cloud for use during recovery from a disaster
+  * **Pilot Light** - A small part of the infrastructure is always running simultaneously syncing mutable data (as databases or documents), while other parts of the infrastructure are switched off and used only during testing
+  * **Warm Standby** - A scaled-down version of a fully functional environment is always running in the cloud
+  * **Multi-Site** - A multi-site solution runs on AWS as well as on your existing on-site infrastructure in an active- active configuration
 
 ## SQS
 
 * SQS is **pull based**, NOT push based
-* Messages are 256 KB in size
-* Messages can be kept in the queeu from 1 minute to 14 days; the default retention period is 4 days
-* Visibility Timeout is the amount of time that the message is invisible in the SQS queue after a reader picks up that message. If the message is processed successfully before the timeout expires, the message will be deleted from the queue. Otherwise, the message will again become visible after the timeout for another reader to pick it up for processing. This could result is message being delivered twice
-* Visibility Timeout maximum is 12 hours
-* Standard SQS guarantees that the message will be delivered at least once
-* SQS Long Polling API call doesn't return until a message arrives in the queue or the long poll times out. This result in less number of API calls and thus less cost
-* Standard queue lets us have a nearly unlimited number of transactions per second
-* Standard queue may deliver more than one copy of the same message
-* Standard queue provides best effort ordering; out of order delivery is possible
-* FIFO queue strictly preserves order
-* FIFO queue gurantees exactly-once delivery
-* FIFO queue is limited to 300 transactions per second
-* FIFO queues also support message groups that allow multiple ordered message groups within a single queue
-* It's a way to decouple infrastructure
-
+* Messages are 256 KB in **size**
+* Messages can be kept in the queeu from 1 minute to 14 days; the default **retention period** is 4 days
+* **Visibility Timeout** is the amount of time that the message is invisible in the SQS queue after a reader picks up that message. If the message is processed successfully before the timeout expires, the message will be deleted from the queue. Otherwise, the message will again become visible after the timeout for another reader to pick it up for processing. This could result is message being delivered twice
+* **Visibility Timeout** maximum is 12 hours
+* **Standard queue** guarantees that the message will be delivered at least once 
+* **Standard queue** lets us have a nearly unlimited number of transactions per second
+* **Standard queue** may deliver more than one copy of the same message
+* **Standard queue** provides best effort ordering; out of order delivery is possible
+* SQS **Long Polling** API call doesn't return until a message arrives in the queue or the long poll times out. This result in less number of API calls and thus less cost
+* **FIFO queue** strictly preserves order
+* **FIFO queue** gurantees exactly-once delivery
+* **FIFO queue** is limited to 300 transactions per second
+* **FIFO queues** also support message groups that allow multiple ordered message groups within a single queue
+* It's a way to **decouple** infrastructure
+* After consuming the message the client app must call SQS API to delete the message
 
 ## SWF
 
@@ -529,19 +564,19 @@
 
 ## SNS
 
-* Push notifications to mobile devices
+* **Push notifications** to mobile devices
 * SMS, email & HTTP endpoints
 * Push based delivery, no polling
-* Stored redundantly across multiple AZ
+* Stored redundantly across **multiple AZ**
 * Supports multiple topics
 
 ## API Gateway
 
-* Supports caching of API response
-* Allows enabling CORS to access multiple AWS resources with different origin name using Javascript
-* Allows logging result to CloudWatch
-* Allow throttling to prevent attacks
-* CORS is enforce by client's browser
+* Supports **caching** of API response
+* Allows enabling **CORS** to access multiple AWS resources with different origin name using Javascript
+* Allows logging result to **CloudWatch**
+* Allow **throttling** to prevent attacks
+* **CORS** is enforced by client's browser
 
 ## Kinesis
 
@@ -551,7 +586,7 @@
   * Kinesis Streams
   * Kinesis Analytics
   * Kinesis Firehose
-* Default retension period 24 hours
+* Default retention period 24 hours
 * Maximum retention period 7 days
 * Kinesis Shard Read - 5 transactions per second upto a total data  rate of 2MB per second
 * Kinesis Shard Write - 1000 records per second upto a maximum data write of 1 MB per second
