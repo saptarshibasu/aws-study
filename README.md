@@ -118,6 +118,9 @@
   * Amazon SNS
   * Amazon SQS
   * AWS Lambda
+* Supports at least 3,500 requests per second to add data and 5,500 requests per second to retrieve
+* Server access logging provides detailed records for the requests that are made to a bucket
+* 
 
 ## Cloudfront
 
@@ -130,7 +133,11 @@
 * **S3 bucket policy** gives access to OAI and thus preventing users from directly accessing the S3 files bypassing the Cloudfront
 * Cloudfront **accesslogs** can be stored in an S3 bucket
 * To serve the media of a WordPress website from Cloudfront use the Apache .htaccess file to rewrite the URLs
-* Supports SNI (Server Name Indication). This allows Cloudfront distributions to support multiple TLS certificates
+* Supports **SNI** (Server Name Indication). This allows Cloudfront distributions to support multiple TLS certificates
+* The data transfer out of CloudFront is not chargeable
+* **Invalidation requests** to remove something from the cache is chargeable
+* CloudFront supports **Field Level Encryption**, so that the sensitive data can only be decrypted and viewed by certain components or services in the application stack
+* To use **Field Level Ecryption**, the specific fields and encryption public key need to be configured in CloudFront
 
 ## Snowball
 
@@ -226,6 +233,15 @@
 * AWS AMI Virtualization types - 
   * Paravirtual (PV)
   * Hardware Virtual Machine (HVM) - Amazon recommends
+* Instance store backed EC2 instances can only be rebooted and terminated. They cannot be stopped unlike EBS-backed instances
+* EBS-backed instances once stopped, all data in any attached instance-stores will be deleted
+* EC2-Classic is the original version of EC2 where the elastic IP would get disassociated when the instance stopped
+* With EC2-VPC, the Elastic IP does not get disassociated when stopped
+* When EC2 instance is stopped, it may get moved to a different underlying host
+* EC2 instance states that are billed
+  * running
+  * stopping (The instannce is preparing to hibernate - NOT when the instance is being stopped)
+  * terminated (for reserved instances only that are still in their contracted term)
 
 ## EFS
 
@@ -258,6 +274,7 @@
 * **Sticky session** - required if the ec2 instance is writing a file to the local disk. Traffic will not go to other ec2 instances for the session
 * **Cross zone load balancing** - If one AZ does not receive any traffic
 * **Path Patterns** - Allows to route traffic based on the URL patterns
+* The VPC and subnets need to be specified during configuration
 
 ## Auto Scaling Group
 
@@ -272,6 +289,8 @@
 * **Scaling out** is increasing the number of instances and **scaling up** is increasing the resources
 * The cooldown period helps to ensure that the Auto Scaling group doesn't launch or terminate additional instances before the previous scaling activity takes effect
 * The default cooldown period is 300 seconds
+* Launch Configuration specifies the properties of the launched EC2 instances such as AMI etc.
+* Launch configuration cannot be changed once created
 
 ## EBS
 
@@ -284,6 +303,7 @@
   * **Throughput Optimized HDD (ST1)** - Low cost HDD volume designed for **frequently accessed**, throughput intensive workloads. Good for big data and datawarehouses
   * **Cold HDD (SC1)** - Lowest cost HDD volume designed for **less frequently** accessed workloads. Good for file servers
   * **EBS Magnetic HDD (Standard)** - Previous generation HDD. For workloads where data is infrequently accessed
+* io1 can be provisioned from 100 IOPS up to 64,000 IOPS per volume on Nitro system instance families and up to 32,000 on other instance families. The maximum ratio of provisioned IOPS to requested volume size (in GiB) is 50:1. Therefore, with a 10 Gib volume, the maximum provisioned IOPS should be 500
 * **RAID 0**
   * Striping in multiple disk volumes
   * When I/O performance is more important than fault tolerance
@@ -339,6 +359,7 @@
   - Increase size of EC2 instance
   - Use appropriate volume types
   - Enhanced Networking feature can provide higher I/O performance and lower CPU utilization to the EC2 instance. However, HVM AMI instead of PV AMI is required
+* EBS can provide the lowest latency store to a single EC2 instance. EBS latency is lesser than S3 even with VPC endpoint
 
 ## CloudWatch
 
@@ -351,7 +372,16 @@
 * Since AWS does not have access to the  underlying OS, some metrics are **missing** including disk and memory utilization
 * CloudWatch can collect metrics and logs from services, resources and applications on AWS as well on-premise services
 * CloudWatch Alarms can be created to send notifications or do autoscaling when a certain metrics satisfies a configured condition
-* CloudWatch Events allow the user to configure a Lambda function to be triggered on certain system events viz. launch of EC2 instance in an ASG
+* CloudWatch Events allow the user to configure a Lambda function to be triggered on certain system events
+* Alarm - EC2 actions -
+  * Recover - Recover the instance on different hardware
+  * Stop
+  * Terminate
+  * Reboot
+* CloudWatch Alarms 
+  * impaired - checks failed
+  * insufficient data - checks in progress 
+  * ok - all checks passed
 
 ## Route 53
   
@@ -409,6 +439,7 @@
   * Provide SSL options when connecting to database
 * RDS, in general, is **not serverless** (except Aurora Serverless which is serverless)
 * We cannot access the RDS **virtual machines**. Patching the RDS operating system is Amazon's responsibility
+* **Enhanced Monitoring** metrics are useful when it is required to see how different processes or threads on a DB instance use the CPU
 
 ## DynamoDB
 
@@ -535,6 +566,8 @@
   * **Pilot Light** - A small part of the infrastructure is always running simultaneously syncing mutable data (as databases or documents), while other parts of the infrastructure are switched off and used only during testing
   * **Warm Standby** - A scaled-down version of a fully functional environment is always running in the cloud
   * **Multi-Site** - A multi-site solution runs on AWS as well as on your existing on-site infrastructure in an active- active configuration
+* Lambda EIN relation
+* Third party **TLS certificates** can be imported to either AWS Certificate Manager or IAM certificate store
 
 ## SQS
 
@@ -560,7 +593,13 @@
 * Workflow service viz. human interaction
 * SWF workflow execution can last upto 1 year
 * SWF provides a task oriented API, whereas SQS peovides a message oriented API
-* Workflow Startes, Deciders, Activity Workers
+* SWF Actors
+  * Workflow Startes
+  * Deciders - 
+    * Handles special tasks called decision tasks. Amazon SWF issues decision tasks whenever a workflow execution has transitions such as an activity task completing or timing out
+    * decides the next steps, including any new activity tasks, and returns those to Amazon SWF
+  * Activity Workers
+  * SWF is a fully-managed state tracker and task coordinator service. It does not provide serverless orchestration to multiple AWS resources. AWS Step Functions provides serverless orchestration for modern applications
 
 ## SNS
 
@@ -600,6 +639,8 @@
 * Identity pools are temporary IAM roles to access various AWS resources
 * Cognito uses push synchronizations and SNS notifications to push updates across devices
 * Cognito is an Identity broker which handles interaction between the AWS applications and the Web Id Provider
+* Active Directory - SAML Federation
+* If the corporate identity store is not compatible with SAML 2.0, then we can build a custom identity broker application to perform a similar function. The broker application authenticates users, requests temporary credentials for users from Amazon STS, and then provides them to the user to access AWS resources.
 
 ## AWS OpsWorks
 
@@ -625,3 +666,35 @@
   * **All at once** - Traffic is shifted to the new Lambda version all at once
 
 
+## AWS Directory Service
+
+* Managed Microsoft Active Directory
+* Corporate Active Directory can be integrated with AWS using AWS Directory Service AD Connector
+* IAM Role can be assigned to the users or groups from the coprorate Active Directory once it is integrated with the VPC via the AWS Directory Service AD Connector
+
+## AWS Shield
+
+* All AWS customers benefit from the automatic protections of **AWS Shield Standard**, at no additional charge
+* **AWS Shield Standard** with Amazon CloudFront and Amazon Route 53 provides comprehensive availability protection against all known infrastructure (Layer 3 and 4) attacks like SYN/UDP floods, reflection attacks, and others to support high availability of your applications on AWS
+* **AWS Shield Advanced** provides additional detection and mitigation against large and sophisticated DDoS attacks
+
+## AWS WAF
+
+* AWS WAF helps protects your website from common attack techniques like SQL injection and Cross-Site Scripting (XSS)
+* Rate based rule allows you to specify the number of web requests that are allowed by a client IP in a trailing, continuously updated, 5 minute period
+* Rate based rule is designed to protect the app from use cases such web-layer DDoS attacks, brute force login attempts and bad bots
+* The custmers can create rules to filter web traffic based on conditions that include IP addresses, HTTP headers and body, or custom URIs
+
+## Amazon Macie
+
+* Amazon Macie recognizes sensitive data such as personally identifiable information (PII) or intellectual property, and provides us with dashboards and alerts that give visibility into how this data is being accessed or moved
+
+## Amazon Inspector
+
+* Amazon Inspector automatically assesses applications for vulnerabilities or deviations from best practices and produces a detailed list of security findings prioritized by level of severity
+* Amazon Inspector includes a knowledge base of hundreds of rules mapped to common security best practices and vulnerability definitions such as remote root login being enabled, or vulnerable software versions installed
+
+## Lambda
+
+* Lamda provides CloudWatch metrics for Invocations and Errors
+* Lambda@Edge function can intercept the request and response at the CloudFront edge locations and modify the request and responses. Possible use cases include URL rewriting, modifying requests based on the client user-agent etc.
