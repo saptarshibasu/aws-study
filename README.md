@@ -10,14 +10,14 @@
 * **Eventual** consistency for overwrite PUTs and DELETEs
 * **Designed for** 99.99% availability for S3 Standard, 99.9% for S3 - IA & 99.5% for S3 One Zone - IA
 * Amazon **guarantees availability** - 99.9% for S3 Standard, 99% for S3 - IA & S3 One Zone - IA
-* Amazon **guarantees durability** 99.999999999% (11 * 9's) for all storage classes
+* Amazon **guarantees durability** of 99.999999999% (11 * 9's) for all storage classes
 * **Replicated** to >= 3 AZ (except S3 One Zone IA)
 * **S3 Standard** - Frequently accessed
 * **S3 Infrequently Accessed (IA)** - Provides rapid access when needed
 * **S3 Infrequently Accessed (IA)** - Less storage cost but has data retrieval cost
 * **S3 One Zone IA** - Data is stored in a single AZ + Retrieval charge
 * **S3 Intelligent Tiering** - ML based - moves object to different storage classes based on its learning about usage of the object
-* **S3 Glacier** - Archive + Retrival time configurable from minutes to hours + Retrieval charge
+* **S3 Glacier** - Archive + Retrival time configurable from minutes to hours + Retrieval charge (Separate service integrated with S3)
 * **S3 Glacier Deep Archive** - Retrieval time of 12 hrs + Retrieval charge
 * **S3 Reduced Redundacy** - Deprecated. Sustains loss of data in a single facility
 * Charged based on 
@@ -29,7 +29,7 @@
   * Cross Region Replication
 * **Cross Region Replication** for High Availability or Disaster Recovery
 * **Cross Region Replication** requires versioning to be enabled in both source and destination
-* **Cross Region Replication** not going to replicate
+* **Cross Region Replication** is not going to replicate
   * file versions created before enabling cross region replication
   * delete marker
   * version deletions
@@ -37,8 +37,8 @@
 * **Cross Region Replication** can replicate to buckets in different account
 * **Transfer Acceleration** for reduced upload time
 * **Transfer Acceleration** takes advantage of Cloudfront's globally distributed edge locations and then routes data to the S3 bucket through Amazon's internal backbone network
-* The **bucket access logs** can be stored in another bucket owned by the same AWS account in the same region
-* Enabling **logging** on a bucket from console also updates the ACL on the target bucket to grant write permission to the Log Delivery group.
+* The **bucket access logs** can be stored in another bucket which must be owned by the same AWS account in the same region
+* Enabling **logging** on a bucket from the management console also updates the ACL on the target bucket to grant write permission to the Log Delivery group
 * **Encryption at Rest** - 
   * SSE-S3 (Amazon manages key)
   * SSE-KMS (Amazon + User manages keys)
@@ -59,20 +59,21 @@
   * Server side encryption
   * Key managed by customer outside AWS
   * HTTPS is a must
-  * Key to supplied in HTTP header of every request
+  * Key to be supplied in HTTP header of every request
 * **Client Side Encryption**
   * Key managed by customer outside AWS
   * Clients encrypt / decrypt data
 * When **encryption** is enabled on an existing file, a new version will be created (provided versioning is enabled)
 * Prefer default **encryption** settings over S3 bucket policies to encrypt objects at rest
-* With **SSE-KMS** enabled, the KMS limits might need to be increased to avoid throttling of lot of small uploads
+* With **SSE-KMS** enabled, the KMS limits might need to be increased to avoid throttling of a lot of small uploads
 * **Versioning**, once enabled, cannot be disabled. It can only be suspended
 * **Versioning** is enabled at the bucket level
 * If **versioning** is enabled, S3 can be configured to require multifactor authentication for 
   * permanently deleting an object version
   * suspend versioning on bucket
+* Only root account can enable **MFA Delete** using CLI
 * In a bucket with **versioning** enabled, even if the file is deleted, the bucket cannot be deleted using AWS CLI until all the versions are deleted
-* When each individual file has public access, uploading a new version of an existing file doesn't automatically give **public access** to the latest version (unless an S3 bucket policy exists to give public access)
+* When each individual file is given public access separately, uploading a new version of an existing file doesn't automatically give **public access** to the latest version (unless an S3 bucket policy exists to give public access)
 * **Lifecycle management rules** (movement to different storage type and expiration) can be set for current version and previous versions separately
 * **Lifecycle management rules** can be used to delete incomplete multipart uploads after a configurable no. of days
 * Files are stored as **key-value pair**. Key is the file name with the entire path and value is the file content as a sequence of bytes
@@ -86,10 +87,9 @@
 * S3 **Bucket Policy** can be used to provide public read access to all files in the bucket instead of providing public access to each individual file
 * S3 evaluates and applies **bucket policies** before applying bucket encryption settings. Even if bucket encryption settings is enabled, PUT requests without encryption information will be rejected if there are bucket policies to reject such PUT requests
 * S3 static website URL: `<bucket-name>.s3-website-<aws-region>.amazonaws.com` or `<bucket-name>.s3-website.<aws-region>.amazonaws.com`
-* Only root account can enable **MFA Delete** using CLI
 * **Pre-signed URL** allows users to get temporary access to buckets and objects
 * **S3 Inventory** allows producing reports about S3 objects daily or weekly in a different S3 bucket
-* **S3 Inventory** reports format can be specified and the data can be queries using Athena
+* **S3 Inventory** reports format can be specified and the data can be queried using Athena
 * **Storage class** needs to be specified during object upload
 * **S3 Analytics**, when enabled, generates reports in a different S3 bucket to give insights about the object usage and this can be used to recommend when the object should be moved from one storage class to another
 * **Glacier** - Retrieval Policy
@@ -102,17 +102,28 @@
   * **Vault Policy** - similar to bucket policy - restrict user access
   * **Lock Policy** - immutable - once set cannot be changed
     * WORM Policy - write once read many
-    * Forbid deleting an archive if it is less than 1 year
-* Earlier S3 **performance** would start degrading with 100 TPS
+    * Forbid deleting an archive if it is less than 1 year = regulatory compliance
+    * Nultifactor authentication on file access
 * Files retrieved from **Glacier** will be stored in Reduced Redundancy Storage class for a specified number of days
 * For faster retrieval from **Glacier** based on Retrieval Policy, Capacity Units may need to be purchased
-* Historically the recommended approach is to have **random 4 characters** in front of the key name for better distribution of objects across partitions
-* **S3 & Glacier Select** - 
+* Amazon S3 **Glacier** automatically encrypts data at rest using Advanced Encryption Standard (AES) 256-bit symmetric keys
+* **Glacier** range retrieval (byte range) is charged as per the volume of data retrieved
+* In a single **Glacier** upload, an archive of maximum 4GB size can be uploaded
+* Any **Glacier** upload above 100 MB  should use multipart upload
+* A **Glacier** vault can be deleted only when all its content archives are deleted
+* **Glacier** allows the user or application to be notified through SNS when the requested data becomes available
+* Bucket access policy (for S3) or Vault access policy (for Glacier) are resource based policies (directly attached to a particular resource - vault/bucket in this case), whereas IAM policies are user based policies
+* One Vault access policy can be attached to each Vault
+* One **Glacier** retrieval policy per region
+* **S3 Glacier Select** - 
   * Allows to select a subset of rows and colums using SQL without retrieving the entire file
   * Joins and subqueries not allowed
   * Files can be compressed with GZIP or BZIP2
   * Works with file format CSV, JSON, Parquet
-* Amazon S3 Glacier automatically encrypts data at rest using Advanced Encryption Standard (AES) 256-bit symmetric keys
+  * Works with all 3 retrieval options - Expedited, Standard & Bulk
+* **Glacier** inventory (of available objects) is updated every 24 hours - no real time data
+* Earlier S3 **performance** would start degrading with 100 TPS
+* Historically the recommended approach is to have **random 4 characters** in front of the key name for better distribution of objects across partitions
 * To host a static website the S3 bucket will have the same name as the domain or subdomain
 * S3 notification feature enables the user to receive notifications when certain events happen in a bucket. S3 supports following destinations
   * Amazon SNS
@@ -120,7 +131,6 @@
   * AWS Lambda
 * Supports at least 3,500 requests per second to add data and 5,500 requests per second to retrieve
 * Server access logging provides detailed records for the requests that are made to a bucket
-* 
 
 ## Cloudfront
 
@@ -138,6 +148,13 @@
 * **Invalidation requests** to remove something from the cache is chargeable
 * CloudFront supports **Field Level Encryption**, so that the sensitive data can only be decrypted and viewed by certain components or services in the application stack
 * To use **Field Level Ecryption**, the specific fields and encryption public key need to be configured in CloudFront
+* Use signed URLs for the following cases:
+  * RTMP distribution. Signed cookies aren't supported for RTMP distributions.
+  * Restrict access to individual files, for example, an installation download for your application.
+  * Users are using a client (for example, a custom HTTP client) that doesn't support cookies.
+* Use signed cookies for the following cases:
+  * Provide access to multiple restricted files, for example, all of the files for a video in HLS format or all of the files in the subscribers' area of a website
+  * You don't want to change your current URLs
 
 ## Snowball
 
@@ -242,6 +259,9 @@
   * running
   * stopping (The instannce is preparing to hibernate - NOT when the instance is being stopped)
   * terminated (for reserved instances only that are still in their contracted term)
+* AWS Systems Manager Parameter Store provides secure, hierarchical storage for configuration data management and secrets management. You can store data such as passwords, database strings, and license codes as parameter values. You can store values as plain text or encrypted data. You can then reference values by using the unique name that you specified when you created the parameter
+* Select Auto-assign Public IP option so that the launched EC2 instance has a public IP from Amazon's public IP pool
+
 
 ## EFS
 
@@ -383,6 +403,11 @@
   * insufficient data - checks in progress 
   * ok - all checks passed
 
+## CloudTrail
+
+* Across regions
+
+
 ## Route 53
   
 * In AWS, the most common records are:
@@ -449,6 +474,7 @@
 * Supports both **Eventual Consistant** Reads (Default) & **Strongly Consistant** Reads
 * **Serverless** service
 * Amazon DynamoDB Accelerator (DAX) is a fully managed, highly available, in-memory cache that can reduce Amazon DynamoDB response times from milliseconds to microseconds
+* 
 
 ## Redshift
 
@@ -461,6 +487,10 @@
 * Available in only **1 AZ**
 * **Backup** retention period is 1 day by default which can be extended to 35 days
 * Can asynchronously replicate to S3 in a different region for **disaster recovery**
+* **Redshift Spectrum** is a feature of Amazon Redshift that enables you to run queries against exabytes of unstructured data in Amazon S3, with no loading or ETL required
+* With **enhanced VPC Routing**, Amazon Redshift forces all COPY and UNLOAD traffic between the Redshift cluster and the data repositories through the Amazon VPC. When we use Enhanced VPC Routing to route traffic through your VPC, you can also use VPC flow logs to monitor COPY and UNLOAD traffic.
+* work load management
+* Audit logging
 
 ## Aurora
 
@@ -475,6 +505,7 @@
 * Two types of **replicas** - MySQL replicas (based on MySQL binlog) and Aurora Replicas
 * Automated **failover** is only possible with Aurora replicas (not MySQL replicas)
 * **Failover** in Aurora is instantaneous. It’s HA native
+* Custom endpoint
 
 ## ElasticCache
 
@@ -492,10 +523,21 @@
   
 ## VPC
 
+* **VPC Architecture Diagram**
+
+![VPC Architecture Diagram](nat-gateway-diagram.png)
+
+* **VPC Architecture Diagram with IPV6**
+
+![VPC Architecture Diagram with IPV6](scenario-2-ipv6-diagram.png)
+
 * VPC **Flow Logs** allows us to monitor the traffic within, in and out of your VPC (useful for security, performance, audit)
 * VPC are per Account per **Region**
 * Subnets are per VPC per **AZ**
 * Subnet doesn't span across **AZ**
+* Inter AZ data transfer is chargeable
+* You are initially limited to launching 20 Amazon EC2 instances at any one time and a maximum VPC size of /16 (65,536 IPs)
+* An instance launched in a VPC using an Amazon EBS-backed AMI maintains the same IP address when stopped and restarted
 * **Security Groups** doesn't span across VPC
 * A VPC can have only 1 **internet Gateway**
 * Amazon reserves 5 **IP** in each subnet
@@ -509,6 +551,12 @@
 * **NAT** Gateway automatically have a public IP assigned
 * With **NAT** Gateway there is no need to disable source / destination checks
 * Create a **NAT** Gateway in each AZ and configure the route to use the NAT Gateway in the same AZ
+* Once a **NAT** Gateway is created, its elastic IP cannot be disassociated from it until the NAT gateway is deleted. Disassociation does not automatically return the eleastic IP
+* The NACL of the subnet applies to the **NAT** Gateway which uses ports 1024–65535
+* A **NAT** gateway cannot send traffic over VPC endpoints, AWS Site-to-Site VPN connections, AWS Direct Connect, or VPC peering connections. If your instances in the private subnet must access resources over a VPC endpoint, a Site-to-Site VPN connection, or AWS Direct Connect, use the private subnet’s route table to route the traffic directly to these devices
+* To avoid data processing charges for **NAT** gateways when accessing Amazon S3 and DynamoDB that are in the same Region, set up a gateway endpoint and route the traffic through the gateway endpoint instead of the NAT gateway. There are no charges for using a gateway endpoint
+* **NAT** Gateway limit - 5 per AZ
+* To increase the limit of **NAT** gateway or  that of elastic IP use Amazon VPC Limits Form
 * The public subnet must be configured to asign public **IP** addresses to the EC2 machines
 * **NACL** is evaluated before security groups
 * **NACL's** rules are executed in chronological order with lowest numbered rule evaluated first. Therefore DENY should come before ALLOW
@@ -520,6 +568,10 @@
 * By default, each custom **NACL** denies all inbound and outbound traffic
 * Each subnet in a VPC must be associated with a **NACL**. If we do not assign an NACL with the subnet, the subnet will have the default NACL assigned
 * IP addresses can be blocked by **NACL** and NOT security groups
+* **VPC Security Flow**
+
+![VPC Security Flow](security-diagram.png)
+
 * 2 public subnets are required to create a **load balancer**
 * VPC **flow logs** capture information about IP traffic going to and from the network interfaces in the VPC
 * **Flow logs** are stored in Cloudwatch logs
@@ -528,18 +580,36 @@
 * **Flow logs** cannot be tagged
 * Once a **Flow log** is created, its configuration cannot be changed
 * Not all traffic is monitored in VPC **Flow log**. Traffic not monitored include:
-  * DHCP traffice
+  * DHCP traffic
   * Traffic to and from Amazon DNS
-  * Traffic of Amzon Windows License activation
+  * Traffic of Amazon Windows License activation
   * Traffic to and from 169.254.169.254 for instance metadata
   * Traffic to the reserved IP address for the default VPC router
-* A **bastion host** is a special purpose computer specially designed to withstand attacks. The computer usually hosts a single application, e.g. a proxy server, and all other services are removed or limited to reduce the threat to the computer. It is hardened in this manner primarily due to its location and purpose which is either on the outside of a firewall or in a demelitarized zone (DMZ) and usually involves access from untrusted networks or computers
+  * 169.254.0.0/16
+  * Routing in the subnet
+* A **Bastion host** is a special purpose computer specially designed to withstand attacks. The computer usually hosts a single application, e.g. a proxy server, and all other services are removed or limited to reduce the threat to the computer. It is hardened in this manner primarily due to its location and purpose which is either on the outside of a firewall or in a demelitarized zone (DMZ) and usually involves access from untrusted networks or computers
 * A **NAT** Gateway is used to provide internet traffic to the private subnet
 * A **Bastion host** is used to administer the EC2 instances in the private subnet using SSH or RDP 
-* Direct Connect provides reliable, high throughput, dedicated and secure connection from the local data center to the AWS
-* **VPC endpoints** allow the VPC to privately connect to the supported AWS services without leaving the AWS network. Two types of VPC Endpoints - 
+* **AWS Direct Connect** provides reliable, high throughput, dedicated and secure connection from the local data center to the AWS
+* A Corporare network can be connected to a VPC using a VPN over the internet or a VPN over **AWS Direct Connect**. VPN over Direct Connect is significantly more expensive than over internet
+* Using **AWS Direct Connect**, a dedicated network connection between the AWS VPC and corporate network can be established
+* **VPC endpoints** allow the VPC to privately connect to the supported AWS services without leaving the AWS network. The instances in the VPC do not require public IP. Two types of VPC Endpoints - 
   * **Interface Endpoints** - An elastic network interface with a private IP address that serves as an entrypoint for traffic destined to a supported service
   * **Gateway Endpoints** - Only for S3 and DynamoDB
+* **Interface endpoints** are powered by AWS PrivateLink - doesn't require public IP
+* **VPC Endpoints** support only IPv4 traffic
+* **VPC Endpoints** = The service and the VPC must be in the same region
+* Currently, no CloudWatch metric is available for the interface-based **VPC endpoint**
+* **VPC Peering** can connect to VPC in same account or different account, in same region or different region
+* **VPC Peering** does not need Internet Gateway
+* **VPC Peering** traffic withing region is not encrypted, but across region is AEAD encrypted
+* By default, a query for a public hostname of an instance in a peered VPC in a different region will resolve to a public IP address. Route 53 private DNS can be used to resolve to a private IP address with Inter-Region **VPC Peering**
+* Inter-Region **VPC Peering** doesn't support IPv6
+* Services that cannot be used over **VPC Peering** - EFS, Network Load Balancer, AWS PrivateLink
+* **Accessing a service from a different region without going through internet** - 
+  * Use a inter-region VPC peering to connect the two provider VPC in different regions
+  * Use a Network Load Balancer in the secondary provider VPC to connect to the primary VPC service over VPC peering
+  ![Image of inter-Region solution for VPC Endpoint](inter-region-peering-provider-side.png)
 * On creation of a VPC, a default route table, NACL and security group are automatically created. Subnets and Internet Gateways are not automatically created
 * US-East-1A in one AWS account can be completely different from US-East-1A in another AWS account
 * **Traffic Flow** - 
@@ -550,13 +620,12 @@
   * The **public subnets** should be associated with a custom route table that should have a route that will allow destination to everywhere (0.0.0.0/0) through the internet gateway
 * **Private subnets** should be associated with a custom NACL that allows traffic to and from the public subnets (atleast SSH & ICMP) and internet (for NAT Gateway to work)
 * **Private subnet** should be associated with a route table that route all internet traffic (0.0.0.0/0) to the NAT Gateway
-* VPC **peering** connection does not support edge to edge routing
-* A Corporare network can be connected to a VPC using a VPN over the internet or a VPN over AWS Direct Connect
-* Using AWS Direct Connect, a dedicated network connection between the AWS VPC and corporate network can be established
-* **ENI** - ENI (Elastic Network Interface) is attached to a subnet of VPC
-* **ENI** - ENI has IP and security groups attached
+* VPC **peering** connection does not support edge to edge routing or transitive routing
+* **ENI** - ENI (Elastic Network Interface) is attached to a subnet of VPC and cannot be used across Availability Zone or VPC
+* **ENI** - ENI has IP, source & destination check flag, MAC address and security groups attached
 * **ENI** - All EC2 instances have a primary ENI. Additional ENIs can be 
 * **ENI** - ENI can be used to design low cost high availability by reassigning the ENI to a new EC2 instance when the original instance fails
+* **ENI** - Customer will be charged if the Elastic IP is attached to an ENI which is not associated with any running instance 
 * **ENI** - Attach termminology
   * **Hot Attach** - When the instance is running
   * **Warm Attach** - When the instance is stopped
@@ -566,8 +635,35 @@
   * **Pilot Light** - A small part of the infrastructure is always running simultaneously syncing mutable data (as databases or documents), while other parts of the infrastructure are switched off and used only during testing
   * **Warm Standby** - A scaled-down version of a fully functional environment is always running in the cloud
   * **Multi-Site** - A multi-site solution runs on AWS as well as on your existing on-site infrastructure in an active- active configuration
-* Lambda EIN relation
+* To enable Lambda function to access resources inside a private VPC, we must provide additional VPC-specific configuration information that includes private subnet IDs and security group IDs. AWS Lambda uses this information to set up elastic network interfaces (**ENI**s) that enable the function to connect securely to other resources within the private VPC
+* Each **ENI** is assigned a private IP address from the IP address range within the subnets you specify. Lambda functions that are connected to a VPC do not have public IP addresses or internet access by default. A NAT Gateway is required, if the function needs internet access
+* If the VPC does not have sufficient **ENI**s or subnet IPs, the Lambda function will not scale as requests increase, and we will see an increase in invocation errors with EC2 error types like EC2ThrottledException
+* You cannot detach a primary **ENI** from an instance
 * Third party **TLS certificates** can be imported to either AWS Certificate Manager or IAM certificate store
+* **Security Groups** are applied at the instance level, whereas NACLs are at the subnet level
+* When you add an Internet gateway, an egress-only Internet gateway, a virtual private gateway, a NAT device, a peering connection, or a VPC endpoint in your VPC, you must update the **route table** for any subnet that uses these gateways or connections
+* A Site-to-Site **VPN connection** consists of a virtual private gateway attached to your VPC and a customer gateway located in your data center
+* An **egress-only Internet gateway** is for use with IPv6 traffic only. It allows outbound communication over IPv6 from instances in a VPC to the Internet, and prevents the Internet from initiating an IPv6 connection with the instances (Similar to NAT Gateway for IPv4)
+* The **Internet Gateway** works with both IPv6 and IPV4 and it does Network Address Translation (NAT) between the public IP and the private subnet IP for the instances while communicating with the resources in the internet
+* **Ephemeral ports** - Clients receives response to server requests on random ports in the range 1024-65535 (ephemeral ports). Security groups don't need to handle ephemeral ports as security groups are stateful, outbound traffic to allowed inbound traffic is always allowed. However, NACL needs to add proper entries for ephemeral ports
+* **AWS PrivateLink** - As a service user, you will need to create interface type VPC endpoints for services that are powered by PrivateLink. These service endpoints will appear as Elastic Network Interfaces (ENIs) with private IPs in your VPCs. Once these endpoints are created, any traffic destined to these IPs will get privately routed to the corresponding AWS services
+* **AWS PrivateKink** - As a service owner, you can onboard your service to AWS PrivateLink by establishing a Network Load Balancer (NLB) to front your service and create a PrivateLink service to register with the NLB. Your customers will be able to establish endpoints within their VPC to connect to your service after you whitelisted their accounts and IAM roles
+* **Bring Your Own IP (BYOIP)** - Customers can move all or part of their existing publicly routable IPv4 address space to AWS for use with their AWS resources. Customers will continue to own the IP range, however, AWS will take over its advertisement on the internet. Customers can create Elastic IPs from the IP space they bring to AWS and use them with EC2 instances, NAT Gateways, and Network Load Balancers. Customers will continue to have access to Amazon-supplied IPs and can choose to use BYOIP Elastic IPs, Amazon-supplied IPs, or both
+* **Use Cases of BYOIP** -
+  * IP Reputation
+  * IP Whitelisting
+  * IP Hardcoding
+  * Regulation & Compliance
+* Amazon VPC **traffic mirroring**, provides deeper insight into network traffic by allowing you to analyze actual traffic content, including payload, and is targeted for use-cases when you need to analyze the actual packets to determine the root cause a performance issue, reverse-engineer a sophisticated network attack, or detect and stop insider abuse or compromised workloads
+* Default VPCs are assigned a CIDR range of 172.31.0.0/16. Default subnets within a default VPC are assigned /20 netblocks within the VPC CIDR range
+* Currently, Amazon VPC supports five (5) IP address ranges, one (1) primary and four (4) secondary for IPv4. Each of these ranges can be between /28 (in CIDR notation) and /16 in size. The IP address ranges of your VPC should not overlap with the IP address ranges of your existing network
+* For IPv6, the VPC is a fixed size of /56 (in CIDR notation). A VPC can have both IPv4 and IPv6 CIDR blocks associated to it
+* For VPCs with a hardware VPN connection or Direct Connect connection, instances can route their Internet traffic down the virtual private gateway to your existing datacenter. From there, it can access the Internet via your existing egress points and network security/monitoring devices
+* An internet gateway is not required to establish an AWS Site-to-Site VPN connection
+* Amazon supports Internet Protocol Security (IPSec) VPN connections
+* Traffic between two EC2 instances in the same AWS Region stays within the AWS network, even when it goes over public IP addresses
+* Traffic between EC2 instances in different AWS Regions stays within the AWS network, if there is an Inter-Region VPC Peering connection between the VPCs where the two instances reside
+* You may use a third-party software VPN to create a site to site or remote access VPN connection with your VPC via the Internet gateway
 
 ## SQS
 
@@ -698,3 +794,12 @@
 
 * Lamda provides CloudWatch metrics for Invocations and Errors
 * Lambda@Edge function can intercept the request and response at the CloudFront edge locations and modify the request and responses. Possible use cases include URL rewriting, modifying requests based on the client user-agent etc.
+
+## ECS
+
+* Secrets
+
+
+ec 2 longest running scale in
+
+cloudfront gailover origin
