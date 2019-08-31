@@ -609,7 +609,9 @@
 * **Accessing a service from a different region without going through internet** - 
   * Use a inter-region VPC peering to connect the two provider VPC in different regions
   * Use a Network Load Balancer in the secondary provider VPC to connect to the primary VPC service over VPC peering
+
   ![Image of inter-Region solution for VPC Endpoint](inter-region-peering-provider-side.png)
+  
 * On creation of a VPC, a default route table, NACL and security group are automatically created. Subnets and Internet Gateways are not automatically created
 * US-East-1A in one AWS account can be completely different from US-East-1A in another AWS account
 * **Traffic Flow** - 
