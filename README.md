@@ -261,6 +261,17 @@
   * terminated (for reserved instances only that are still in their contracted term)
 * AWS Systems Manager Parameter Store provides secure, hierarchical storage for configuration data management and secrets management. You can store data such as passwords, database strings, and license codes as parameter values. You can store values as plain text or encrypted data. You can then reference values by using the unique name that you specified when you created the parameter
 * Select Auto-assign Public IP option so that the launched EC2 instance has a public IP from Amazon's public IP pool
+* All AMIs are categorized as either backed by Amazon EBS or backed by instance store
+* To coordinate Availability Zones across accounts, you must use the AZ ID, which is a unique and consistent identifier for an Availability Zone
+* Using the console, you can change the DeleteOnTermination attribute when you launch an instance. To change this attribute for a running instance, you must use the command line
+* With instance store, the entire image is downloaded from S3 before booting and hence the boot time is usually around 5 mins
+* With EBS-backed instances, only the part needed for booting is first downloaded from the EBS Snapshot and hence the boot time is shorter around 1 min
+* When an Amazon EBS-backed instance is stopped, you're not charged for instance usage; however, you're still charged for volume storage
+* We charge you for each second, with a one-minute minimum, that you keep the instance running, even if the instance remains idle and you don't connect to it
+* AMIs with encrypted volumes cannot be made public. It can be shared with specific accounts along with the KMS CMK
+* During the AMI-creation process, Amazon EC2 creates snapshots of your instance's root volume and any other EBS volumes attached to your instance. You're charged for the snapshots until you deregister the AMI and delete the snapshots
+* If any volumes attached to the instance are encrypted, the new AMI only launches successfully on instances that support Amazon EBS encryption
+* Encrypting during the CopyImage action applies only to Amazon EBS-backed AMIs. Because an instance store-backed AMI does not rely on snapshots, you cannot use copying to change its encryption status
 
 
 ## EFS
@@ -309,8 +320,15 @@
 * **Scaling out** is increasing the number of instances and **scaling up** is increasing the resources
 * The cooldown period helps to ensure that the Auto Scaling group doesn't launch or terminate additional instances before the previous scaling activity takes effect
 * The default cooldown period is 300 seconds
+* Cooldown period is applicable only for simple scaling policy
 * Launch Configuration specifies the properties of the launched EC2 instances such as AMI etc.
 * Launch configuration cannot be changed once created
+* Scaling Policy - 
+  * Target tracking scaling — Increase or decrease the current capacity of the group based on a target value for a specific metric. E.g. CPU Utilization or any other metric that will increase or decrease proportionally with the no. of instances
+  * Step scaling — Increase or decrease the current capacity of the group based on a set of scaling adjustments, known as step adjustments, that vary based on the size of the alarm breach. The configuration defines the desired number of instances for a range of value for the given metric. There could be multiple such steps defined
+  * Simple scaling — Increase or decrease the current capacity of the group based on a single scaling adjustment
+* When there are multiple policies in force at the same time, there's a chance that each policy could instruct the Auto Scaling group to scale out (or in) at the same time. When these situations occur, Amazon EC2 Auto Scaling chooses the policy that provides the largest capacity for both scale out and scale in
+* 
 
 ## EBS
 
@@ -380,6 +398,14 @@
   - Use appropriate volume types
   - Enhanced Networking feature can provide higher I/O performance and lower CPU utilization to the EC2 instance. However, HVM AMI instead of PV AMI is required
 * EBS can provide the lowest latency store to a single EC2 instance. EBS latency is lesser than S3 even with VPC endpoint
+* You can configure your AWS account to enforce the encryption of your EBS volumes and snapshots. Activating encryption by default has two effects:
+  * AWS encrypts new EBS volumes on launch
+  * AWS encrypts new copies of unencrypted snapshots
+* Encryption by default is a Region-specific setting. If you enable it for a Region, you cannot disable it for individual volumes or snapshots in that Region
+* Newly created EBS resources are encrypted by your account's default customer master key (CMK) unless you specify a customer managed CMK in the EC2 settings or at launch
+* EBS encrypts your volume with a data key using the industry-standard AES-256 algorithm. Your data key is stored on-disk with your encrypted data, but not before EBS encrypts it with your CMK; it never appears on disk in plaintext
+* When you have access to both an encrypted and unencrypted volume, you can freely transfer data between them. EC2 carries out the encryption and decryption operations transparently
+* 
 
 ## CloudWatch
 
@@ -611,7 +637,7 @@
   * Use a Network Load Balancer in the secondary provider VPC to connect to the primary VPC service over VPC peering
 
   ![Image of inter-Region solution for VPC Endpoint](inter-region-peering-provider-side.png)
-  
+
 * On creation of a VPC, a default route table, NACL and security group are automatically created. Subnets and Internet Gateways are not automatically created
 * US-East-1A in one AWS account can be completely different from US-East-1A in another AWS account
 * **Traffic Flow** - 
@@ -796,6 +822,62 @@
 
 * Lamda provides CloudWatch metrics for Invocations and Errors
 * Lambda@Edge function can intercept the request and response at the CloudFront edge locations and modify the request and responses. Possible use cases include URL rewriting, modifying requests based on the client user-agent etc.
+
+## AWS Config
+
+* AWS Config is a fully managed service that provides you with an AWS resource inventory, configuration history, and configuration change notifications to enable security and governance
+* If configurations do not match the configured compliance rules, it can trigger notifications
+
+## AWS Systems Manager
+
+* Allows to take action on groups of AWS resources
+* Provides a unified user interface so you can view operational data from multiple AWS services and allows you to automate operational tasks across your AWS resources
+
+## AWS Resource Access Manager
+
+* AWS Resource Access Manager (AWS RAM) enables you to share your resources with any AWS account or organization in AWS Organizations. Customers who operate multiple accounts can create resources centrally and use AWS RAM to share them with all of their accounts to reduce operational overhead. AWS RAM is available at no additional charge
+
+## AWS Secrets Manager
+
+* You can encrypt secrets at rest to reduce the likelihood of unauthorized users viewing sensitive information
+* To retrieve secrets, you simply replace secrets in plain text in your applications with code to pull in those secrets programmatically using the Secrets Manager APIs
+* Secrets Manager can rotate secrets by invoking a lambda function. The code of the lambda function is predefined for AWS services. For other types of services, the user need to write the code for the Lammbda function
+* Secrets are encrypted by provided KMS CMK or default account CMK
+* Secrets Manager is similar to AWS Systems Manager's Parameter Store except the following additional features in Secrets Manager
+  * Secret rotation
+  * Random secret generation
+* Secrets Manager is more expensive than AWS Systems Manager
+* Parameter Store is now integrated with Secrets Manager so that you can retrieve Secrets Manager secrets when using other AWS services that already support references to Parameter Store parameters
+
+## AWS Organizations
+
+* AWS Organizations is an account management service that lets you consolidate multiple AWS accounts into an organization that you create and centrally manage. With AWS Organizations, you can create member accounts and invite existing accounts to join your organization. You can organize those accounts into groups and attach policy-based controls
+
+## AWS CloudHSM
+
+* AWS CloudHSM provides hardware security modules in the AWS Cloud. A hardware security module (HSM) is a computing device that processes cryptographic operations and provides secure storage for cryptographic keys
+* Use cases
+  * Offload the SSL/TLS Processing for Web Servers
+* Dedicated hardware - not shared with other AWS customers. It may be useful to meet certain compliance requirements
+
+## AWS KMS
+
+* There are typically three scenarios for how data is encrypted using AWS KMS. Firstly, you can use KMS APIs directly to encrypt and decrypt data using your master keys stored in KMS. Secondly, you can choose to have AWS services encrypt your data using your master keys stored in KMS. In this case data is encrypted using data keys that are protected by your master keys in KMS. Thirdly, you can use the AWS Encryption SDK that is integrated with AWS KMS to perform encryption within your own applications, whether they operate in AWS or not.
+* **Envelope Encryption** - While AWS KMS does support sending data less than 4 KB to be encrypted directly, envelope encryption can offer significant performance benefits. When you encrypt data directly with AWS KMS it must be transferred over the network. Envelope encryption reduces the network load since only the request and delivery of the much smaller data key go over the network. The data key is used locally in your application or encrypting AWS service, avoiding the need to send the entire block of data to KMS and suffer network latency
+* **CMK Rotation** - The previous backing key is not deleted and stored perpetually for decryption of old data until the CMK logical entity itself is deleted. 
+
+## AWS Firewall Manager
+
+* AWS Firewall Manager simplifies your AWS WAF administration and maintenance tasks across multiple accounts and resources. With AWS Firewall Manager, you set up your firewall rules just once. The service automatically applies your rules across your accounts and resources, even as you add new resources
+
+## AWS GuardDuty
+
+* Amazon GuardDuty is a continuous security monitoring service that analyzes and processes the following data sources: VPC Flow Logs, AWS CloudTrail event logs, and DNS logs. It uses threat intelligence feeds, such as lists of malicious IPs and domains, and machine learning to identify unexpected and potentially unauthorized and malicious activity within your AWS environment. This can include issues like escalations of privileges, uses of exposed credentials, or communication with malicious IPs, URLs, or domains. For example, GuardDuty can detect compromised EC2 instances serving malware or mining bitcoin. It also monitors AWS account access behavior for signs of compromise, such as unauthorized infrastructure deployments, like instances deployed in a region that has never been used, or unusual API calls, like a password policy change to reduce password strength
+
+## AWS SingleSignOn
+
+* AWS SSO is an AWS service that enables you to use your existing credentials from your Microsoft Active Directory to access your cloud-based applications, such as AWS accounts and business applications (Office 365, Salesforce, Box), by using single sign-on (SSO)
+* 
 
 ## ECS
 
