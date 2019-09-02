@@ -161,6 +161,8 @@
 * Use signed cookies for the following cases:
   * Provide access to multiple restricted files, for example, all of the files for a video in HLS format or all of the files in the subscribers' area of a website
   * You don't want to change your current URLs
+* You can configure CloudFront to create log files that contain detailed information about every user request that CloudFront receives
+* If you enable logging, you can also specify the Amazon S3 bucket that you want CloudFront to save files in
 
 ## Snowball
 
@@ -278,6 +280,7 @@
 * During the AMI-creation process, Amazon EC2 creates snapshots of your instance's root volume and any other EBS volumes attached to your instance. You're charged for the snapshots until you deregister the AMI and delete the snapshots
 * If any volumes attached to the instance are encrypted, the new AMI only launches successfully on instances that support Amazon EBS encryption
 * Encrypting during the CopyImage action applies only to Amazon EBS-backed AMIs. Because an instance store-backed AMI does not rely on snapshots, you cannot use copying to change its encryption status
+* **Spot Price** - If you terminate your instance, you pay for any partial hour used (as you do for On-Demand or Reserved Instances). However, you are not charged for any partial hour of usage if the Spot price goes above your maximum price and Amazon EC2 interrupts your Spot Instance
 
 
 ## EFS
@@ -312,6 +315,9 @@
 * **Cross zone load balancing** - If one AZ does not receive any traffic
 * **Path Patterns** - Allows to route traffic based on the URL patterns
 * The VPC and subnets need to be specified during configuration
+* Elastic Load Balancing provides access logs that capture detailed information about requests sent to your load balancer
+* Elastic Load Balancing captures the logs and stores them in the Amazon S3 bucket that you specify as compressed files
+* Each access log file is automatically encrypted before it is stored in your S3 bucket and decrypted when you access it
 
 ## Auto Scaling Group
 
@@ -334,7 +340,12 @@
   * Step scaling — Increase or decrease the current capacity of the group based on a set of scaling adjustments, known as step adjustments, that vary based on the size of the alarm breach. The configuration defines the desired number of instances for a range of value for the given metric. There could be multiple such steps defined
   * Simple scaling — Increase or decrease the current capacity of the group based on a single scaling adjustment
 * When there are multiple policies in force at the same time, there's a chance that each policy could instruct the Auto Scaling group to scale out (or in) at the same time. When these situations occur, Amazon EC2 Auto Scaling chooses the policy that provides the largest capacity for both scale out and scale in
-* 
+* Default termination policy - 
+  * Determine which Availability Zone(s) have the most instances, and at least one instance that is not protected from scale in
+  * Determine which instance to terminate so as to align the remaining instances to the allocation strategy for the On-Demand or Spot Instance that is terminating and your current selection of instance types
+  * Determine whether any of the instances use the oldest launch template
+  * Determine whether any of the instances use the oldest launch configuration
+  * Instances are closest to the next billing hour
 
 ## EBS
 
@@ -439,6 +450,14 @@
 
 * Across regions
 
+## CloudFormation
+
+* AWS CloudFormation templates are JSON or YAML-formatted text files that are comprised of five types of elements:
+  * An optional list of template parameters (input values supplied at stack creation time)
+  * An optional list of output values (e.g. the complete URL to a web application)
+  * An optional list of data tables used to lookup static configuration values (e.g., AMI names)
+  * The list of AWS resources and their configuration values
+  * A template file format version number
 
 ## Route 53
   
@@ -521,8 +540,11 @@
 * Can asynchronously replicate to S3 in a different region for **disaster recovery**
 * **Redshift Spectrum** is a feature of Amazon Redshift that enables you to run queries against exabytes of unstructured data in Amazon S3, with no loading or ETL required
 * With **enhanced VPC Routing**, Amazon Redshift forces all COPY and UNLOAD traffic between the Redshift cluster and the data repositories through the Amazon VPC. When we use Enhanced VPC Routing to route traffic through your VPC, you can also use VPC flow logs to monitor COPY and UNLOAD traffic.
+* Amazon Redshift logs information about connections and user activities in your database. These logs help you to monitor the database for security and troubleshooting purposes, which is a process often referred to as database auditing. The logs are stored in the Amazon Simple Storage Service (Amazon S3) buckets
+  * Connection log — logs authentication attempts, and connections and disconnections
+  * User log — logs information about changes to database user definitions
+  * User activity log — logs each query before it is run on the database
 * work load management
-* Audit logging
 
 ## Aurora
 
@@ -537,7 +559,16 @@
 * Two types of **replicas** - MySQL replicas (based on MySQL binlog) and Aurora Replicas
 * Automated **failover** is only possible with Aurora replicas (not MySQL replicas)
 * **Failover** in Aurora is instantaneous. It’s HA native
-* Custom endpoint
+* If you have an Amazon Aurora Replica, in the same or a different Availability Zone, when failing over, Aurora flips the canonical name record (CNAME) for your DB Instance to point at the healthy replica, which is in turn promoted to become the new primary. Start-to-finish, failover typically completes within 30 seconds
+* If you are running Aurora Serverless and the DB instance or AZ become unavailable, Aurora will automatically recreate the DB instance in a different AZ
+* If you do not have an Amazon Aurora Replica (i.e. single instance) and are not running Aurora Serverless, Aurora will attempt to create a new DB Instance in the same Availability Zone as the original instance
+* Disaster recovery across regions is a manual process, where you promote a secondary region to take read/write workloads
+* Aurora Endpoints - 
+  * Cluster Endpoint - Primary DB for read-write
+  * Reader Endpoint - load balanced read replicas for reading
+  * Custom endpoint - load balanced groups of read replicas (max 5 custom endpoints)
+* The amount of replication is independent of the number of DB instances in your cluster
+* The Aurora shared storage architecture makes your data independent from the DB instances in the cluster. For example, you can add a DB instance quickly because Aurora doesn't make a new copy of the table data. Instead, the DB instance connects to the shared volume that already contains all your data
 
 ## ElasticCache
 
@@ -568,11 +599,11 @@
 * Subnets are per VPC per **AZ**
 * Subnet doesn't span across **AZ**
 * Inter AZ data transfer is chargeable
-* You are initially limited to launching 20 Amazon EC2 instances at any one time and a maximum VPC size of /16 (65,536 IPs)
+* You are initially limited to launching 20 Amazon EC2 instances per Region at any one time and a maximum VPC size of /16 (65,536 IPs)
 * An instance launched in a VPC using an Amazon EBS-backed AMI maintains the same IP address when stopped and restarted
 * **Security Groups** doesn't span across VPC
 * A VPC can have only 1 **internet Gateway**
-* Amazon reserves 5 **IP** in each subnet
+* Amazon reserves 5 **IP** in each subnet - 4 at the begining & 1 at the end
 * Each EC2 instance performs source/destination checks by default. This means that the instance must be the source or destination of any traffic it sends or receives. However, a **NAT** instance must be able to send and receive traffic when the source or destination is not itself. Therefore, we must disable source/destination checks on the NAT instance
 * **NAT** instace / gateway must be in public subnet
 * A route from private subnet to **NAT** Gateway is important
@@ -930,7 +961,7 @@ Datawarehouse | Redshift
 ETL | AWS Glue
 Traffic within AWS / not over internet | VPC Endpoint
 Connecting to S3 / DynamoDB without going through internet | Gateway VPC Endpoint
-ASG with 20 EC2 instance | AWS soft limit
+ASG with 20 EC2 instance per Region | AWS soft limit
 Webapp across Regions | Amazon Route53
 Accessing service from a different region VPC | VPC Peering + Interface VPC Endpoint + PrivateLink + Network Load Balancer
 Access over VPC Peering | Edge to edge and transitive routing not supported
@@ -954,3 +985,6 @@ Data loss in EC2 | Instance Store
 Db thread and process CPU utilization | Enhanced minotoring
 CloudWatch custom metrics / Metrics not supported | CPU Utilization + Disk Utilization
 Customer owned IP range | AWS advertises + use as Elastic IP
+Services that by default encrypt | AWS CloudTrail + Amazon Glacier S3
+Lambda deployment | AWS CodeDeploy
+Automatic load balancing, auto scaling etc. | AWS Elastic Beanstalk
