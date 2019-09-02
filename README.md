@@ -20,6 +20,12 @@
 * **S3 Glacier** - Archive + Retrival time configurable from minutes to hours + Retrieval charge (Separate service integrated with S3)
 * **S3 Glacier Deep Archive** - Retrieval time of 12 hrs + Retrieval charge
 * **S3 Reduced Redundacy** - Deprecated. Sustains loss of data in a single facility
+* Minimum storage period
+  * Intelligent Tiering - 30 days
+  * Standard IA - 30 days
+  * One Zone IA - 30 days
+  * Glacier - 90 days
+  * Glacier Deep Archive - 180 days
 * Charged based on 
   * Storage
   * No. of Requests
@@ -832,6 +838,18 @@
 
 * Allows to take action on groups of AWS resources
 * Provides a unified user interface so you can view operational data from multiple AWS services and allows you to automate operational tasks across your AWS resources
+* Sub modules
+  * Session Manager - Browser based shell without the need to open inbound ports, maintain bastion hosts, and manage SSH keys
+  * Run Command - Provides a simple way of automating common administrative tasks across groups of instances such as registry edits, user management, and software and patch installations, replacing the need for bastion hosts, SSH, or remote PowerShell
+  * Patch Manager - helps you select and deploy operating system and software patches automatically across large groups of Amazon EC2 or on-premises instances
+  * Automation - allows you to safely automate common and repetitive IT operations and management tasks across AWS resources
+  * Configuration Compliance - lets you scan your managed instances for patch compliance and configuration inconsistencies
+  * Inventory - collects information about your instances and the software installed on them, helping you to understand your system configurations and installed applications
+  * State Manager - provides configuration management, which helps you maintain consistent configuration of your Amazon EC2 or on-premises instances. With Systems Manager, you can control configuration details such as server configurations, anti-virus definitions, firewall settings, and more. You can define configuration policies for your servers through the AWS Management Console or use existing scripts, PowerShell modules, or Ansible playbooks directly from GitHub or Amazon S3 buckets
+  * Parameter Store
+  * Distributor - enables you to securely store and distribute software packages in your organization
+  * OpsCenter - provides a central location where operations engineers, IT professionals, and others can view, investigate, and resolve operational issues related to their environment
+  * Maintenance Windows - lets you schedule windows of time to run administrative and maintenance tasks across your instances
 
 ## AWS Resource Access Manager
 
@@ -877,13 +895,62 @@
 ## AWS SingleSignOn
 
 * AWS SSO is an AWS service that enables you to use your existing credentials from your Microsoft Active Directory to access your cloud-based applications, such as AWS accounts and business applications (Office 365, Salesforce, Box), by using single sign-on (SSO)
-* 
 
-## ECS
+## AWS Trusted Advisor
 
-* Secrets
+* AWS Trusted Advisor is an online tool that provides you real time guidance to help you provision your resources following AWS best practices
+* Trusted Advisor scans your AWS Infrastructure, compares it to AWS best practices in 5 categories and provides recommended actions
+  * Cost Optimization
+  * Performance
+  * Security
+  * Fault Tolerance
+  * Service Limits
 
+## AWS Budgets
 
-ec 2 longest running scale in
+* AWS Budgets gives you the ability to set custom budgets that alert you when your costs or usage exceed (or are forecasted to exceed) your budgeted amount
+* You can also use AWS Budgets to set reservation utilization or coverage targets and receive alerts when your utilization drops below the threshold you define
 
-cloudfront gailover origin
+## Scenario Question Tips
+
+Term | AWS Services
+---- | ------------
+Streams | Amazon Kinesis
+Disk for OS / boot volume | General Purpose SSD (gp2)
+Disk for DB | Provisioned IOPS SSD (io1)
+Big Data / Data Warehouse / Batch Job | Throughput Optimized HDD (st1)
+Infrequently accessed | Cold HDD (sc1)
+IOPS (no. of TPS) | SSD
+Throughput (data volume per second) | HDD
+Sequential Disk access (viz. batch job, data warehouse) | HDD
+High performance storage across AZ | EFS
+High performance within AZ | EBS
+Blocking IP | NACL
+Datawarehouse | Redshift
+ETL | AWS Glue
+Traffic within AWS / not over internet | VPC Endpoint
+Connecting to S3 / DynamoDB without going through internet | Gateway VPC Endpoint
+ASG with 20 EC2 instance | AWS soft limit
+Webapp across Regions | Amazon Route53
+Accessing service from a different region VPC | VPC Peering + Interface VPC Endpoint + PrivateLink + Network Load Balancer
+Access over VPC Peering | Edge to edge and transitive routing not supported
+DB cache / Session storage | ElasticCache
+Scalable NoSQL DB | DynamoDB
+DB Performance | Read Replica + ElasticCache
+DB Disaster Recovery | Multi AZ
+Greater Control on instances | EC2, EMR
+Workflow | Amazon SWF
+Serverless orchestration | AWS Step Functions
+On-premise storage backup | Storage Gateway
+Hybrid architecture | VPN + Customer Gateway + Direct Connect + VPC Gateway
+Secrets | AWS Secrets Manager + AWS Systems Manager (Parameter Store)
+Chef + Puppet | AWS OpsWorks
+Sophisticated DDoS | Amazon Shield Advanced
+Managing fleet of EC2 instances | AWS Systems Manager + Parameter Store + Session Manager + State Manager + Run Command + Inventory + OpsCenter + Maintenance Windows + Patch Manager + Automation + Distributor
+Personally Identifiable Information (PII) | Amazon Macie
+Synchronous DB replication | Multi AZ
+Asynchronous DB replication | Read replicas
+Data loss in EC2 | Instance Store
+Db thread and process CPU utilization | Enhanced minotoring
+CloudWatch custom metrics / Metrics not supported | CPU Utilization + Disk Utilization
+Customer owned IP range | AWS advertises + use as Elastic IP
