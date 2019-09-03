@@ -251,6 +251,7 @@
 * `http://169.254.169.254/latest/meta-data/local-ipv4/` gives **local IP**
 * Two types of **placement groups**
   * **Clustered Placement Group** - Grouping of instances within a single AZ. Recommended for applications that need low network latency and high network throughput. Only certain instances can be launched in this placement group. It cannot spac multiple AZ
+  * **Partition** – spreads your instances across logical partitions such that groups of instances in one partition do not share the underlying hardware with groups of instances in different partitions. This strategy is typically used by large distributed and replicated workloads, such as Hadoop, Cassandra, and Kafka
   * **Spread Placement Group** - Instances are placed in distinct hardware. Recommended for applications that have a small number of critical instances that should be kept separate from each other. It can span multiple AZ
 * The instances within a **placement group** should be homogeneous
 * Existing instances can't be moved into a **placement group**
@@ -282,6 +283,15 @@
 * Encrypting during the CopyImage action applies only to Amazon EBS-backed AMIs. Because an instance store-backed AMI does not rely on snapshots, you cannot use copying to change its encryption status
 * **Spot Price** - If you terminate your instance, you pay for any partial hour used (as you do for On-Demand or Reserved Instances). However, you are not charged for any partial hour of usage if the Spot price goes above your maximum price and Amazon EC2 interrupts your Spot Instance
 * **Hypervisors** - Xen, Nitro
+* You can move an existing instance to a placement group, move an instance from one placement group to another, or remove an instance from a placement group. Before you begin, the instance must be in the stopped state
+* We recommend using the same instance type for all instances in a cluster placement group
+* You must stop your Amazon EBS–backed instance before you can change its instance type
+* While changing instance type, instance store backed instances must be migrated to the new instance
+* When you stop and start an instance, be aware of the following:
+  * We move the instance to new hardware; however, the instance ID does not change.
+  * If your instance has a public IPv4 address, we release the address and give it a new public IPv4 address. The instance retains its private IPv4 addresses, any Elastic IP addresses, and any IPv6 addresses
+  * If your instance is in an Auto Scaling group, the Amazon EC2 Auto Scaling service marks the stopped instance as unhealthy, and may terminate it and launch a replacement instance. To prevent this, you can suspend the scaling processes for the group while you're resizing your instance
+  * If your instance is in a cluster placement group and, after changing the instance type, the instance start fails, try the following: stop all the instances in the cluster placement group, change the instance type for the affected instance, and then restart all the instances in the cluster placement group
 
 
 ## EFS
