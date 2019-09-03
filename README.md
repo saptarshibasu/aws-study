@@ -281,6 +281,7 @@
 * If any volumes attached to the instance are encrypted, the new AMI only launches successfully on instances that support Amazon EBS encryption
 * Encrypting during the CopyImage action applies only to Amazon EBS-backed AMIs. Because an instance store-backed AMI does not rely on snapshots, you cannot use copying to change its encryption status
 * **Spot Price** - If you terminate your instance, you pay for any partial hour used (as you do for On-Demand or Reserved Instances). However, you are not charged for any partial hour of usage if the Spot price goes above your maximum price and Amazon EC2 interrupts your Spot Instance
+* **Hypervisors** - Xen, Nitro
 
 
 ## EFS
@@ -380,7 +381,8 @@
 * **Snapshots** occupy only the size of data
 * **Snapshots** exist on S3
 * **Snapshots** are incremental
-* **Snapshots** can be shared, but only if they are unencrypted
+* You can share your unencrypted **snapshots** with specific AWS accounts, or you can share them with the entire AWS community by making them public
+* You can share an encrypted **snapshot** only with specific AWS accounts. For others to use your shared, encrypted snapshot, you must also share the CMK key that was used to encrypt it
 * **Snapshots** of encrypted volumes are always encrypted
 * Volumes restored from encrypted **snapshots** are encrypted automatically
 * To take a **snapshot** of the root device, the instance needs to be stopped
@@ -422,7 +424,7 @@
 * Newly created EBS resources are encrypted by your account's default customer master key (CMK) unless you specify a customer managed CMK in the EC2 settings or at launch
 * EBS encrypts your volume with a data key using the industry-standard AES-256 algorithm. Your data key is stored on-disk with your encrypted data, but not before EBS encrypts it with your CMK; it never appears on disk in plaintext
 * When you have access to both an encrypted and unencrypted volume, you can freely transfer data between them. EC2 carries out the encryption and decryption operations transparently
-* 
+* To create snapshots for Amazon EBS volumes that are configured in a RAID array, there must be no data I/O to or from the EBS volumes that comprise the RAID array. These same precautions and steps should be followed whenever you create a snapshot of an EBS volume that serves as the root device for an EC2 instance
 
 ## CloudWatch
 
@@ -434,21 +436,30 @@
   * Install CloudWatch agent (awslogsd) in EC2
 * Since AWS does not have access to the  underlying OS, some metrics are **missing** including disk and memory utilization
 * CloudWatch can collect metrics and logs from services, resources and applications on AWS as well on-premise services
-* CloudWatch Alarms can be created to send notifications or do autoscaling when a certain metrics satisfies a configured condition
+* CloudWatch Alarms can be created to 
+  * send SNS notifications
+  * do EC2 autoscaling when a certain metrics satisfies a configured condition
+  * do EC2 actions
+    * Recover - Recover the instance on different hardware
+    * Stop
+    * Terminate
+    * Reboot
 * CloudWatch Events allow the user to configure a Lambda function to be triggered on certain system events
-* Alarm - EC2 actions -
-  * Recover - Recover the instance on different hardware
-  * Stop
-  * Terminate
-  * Reboot
 * CloudWatch Alarms 
   * impaired - checks failed
   * insufficient data - checks in progress 
   * ok - all checks passed
+* Amazon CloudWatch does not aggregate data across Regions. Therefore, metrics are completely separate between Regions
+
 
 ## CloudTrail
 
-* Across regions
+* By default CloudTrail keeps account activity details upto 90 days
+* These events are limited to management events with create, modify, and delete API calls and account activity. For a complete record of account activity, including all management events, data events, and read-only activity, you’ll need to configure a CloudTrail trail
+* By setting up a CloudTrail trail you can deliver your CloudTrail events to Amazon S3, Amazon CloudWatch Logs, and Amazon CloudWatch Events
+* You can create up to five trails in an AWS region. A trail that applies to all regions exists in each region and is counted as one trail in each region
+* By default, CloudTrail log files are encrypted using S3 Server Side Encryption (SSE) and placed into your S3 bucket
+* CloudTrail integration with CloudWatch logs enables you to receive SNS notifications of account activity captured by CloudTrail. For example, you can create CloudWatch alarms to monitor API calls that create, modify and delete Security Groups and Network ACL’s
 
 ## CloudFormation
 
@@ -908,12 +919,25 @@
 * Use cases
   * Offload the SSL/TLS Processing for Web Servers
 * Dedicated hardware - not shared with other AWS customers. It may be useful to meet certain compliance requirements
+* Your KMS customer master keys (CMKs) never leave the CloudHSM instances, and all KMS operations that use those keys are only performed in your HSMs
 
 ## AWS KMS
 
 * There are typically three scenarios for how data is encrypted using AWS KMS. Firstly, you can use KMS APIs directly to encrypt and decrypt data using your master keys stored in KMS. Secondly, you can choose to have AWS services encrypt your data using your master keys stored in KMS. In this case data is encrypted using data keys that are protected by your master keys in KMS. Thirdly, you can use the AWS Encryption SDK that is integrated with AWS KMS to perform encryption within your own applications, whether they operate in AWS or not.
 * **Envelope Encryption** - While AWS KMS does support sending data less than 4 KB to be encrypted directly, envelope encryption can offer significant performance benefits. When you encrypt data directly with AWS KMS it must be transferred over the network. Envelope encryption reduces the network load since only the request and delivery of the much smaller data key go over the network. The data key is used locally in your application or encrypting AWS service, avoiding the need to send the entire block of data to KMS and suffer network latency
-* **CMK Rotation** - The previous backing key is not deleted and stored perpetually for decryption of old data until the CMK logical entity itself is deleted. 
+* **CMK Rotation** - The previous backing key is not deleted and stored perpetually for decryption of old data until the CMK logical entity itself is deleted
+* **Custom Key Store** -
+  * The AWS KMS custom key store feature combines the controls provided by AWS CloudHSM with the integration and ease of use of AWS KMS
+  * You cannot import key material into your custom key store 
+  * You cannot have KMS automatically rotate keys
+  * Customer managed CMK (Customer Master Key)
+  * Manual Key Rotation - 
+    * manually create new keys
+    * map the new key to alias
+    * Use the alias in source code
+    * do not delete the old key as it will be used to decrypt old data
+* Encryption Algorithm - AES with 256 bit key in GCM mode
+* Generates a unique data key. This operation returns a plaintext copy of the data key and a copy that is encrypted under a customer master key (CMK) that you specify. You can use the plaintext key to encrypt your data outside of KMS and store the encrypted data key with the encrypted data
 
 ## AWS Firewall Manager
 
@@ -982,9 +1006,12 @@ Personally Identifiable Information (PII) | Amazon Macie
 Synchronous DB replication | Multi AZ
 Asynchronous DB replication | Read replicas
 Data loss in EC2 | Instance Store
-Db thread and process CPU utilization | Enhanced minotoring
+Db thread and process CPU utilization | Enhanced monitoring
 CloudWatch custom metrics / Metrics not supported | CPU Utilization + Disk Utilization
 Customer owned IP range | AWS advertises + use as Elastic IP
 Services that by default encrypt | AWS CloudTrail + Amazon Glacier S3
 Lambda deployment | AWS CodeDeploy
 Automatic load balancing, auto scaling etc. | AWS Elastic Beanstalk
+KMS Custom Key Store | CloudHSM
+Single tenant key access | CloudHSM
+Services encrypted by default | Glacier, Storage Gateway, CloudTrail
