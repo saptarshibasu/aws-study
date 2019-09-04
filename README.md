@@ -198,6 +198,8 @@
   * **Stored Volume** - Entire dataset in premise with scheduled backups in S3
 * **Tape Gateway** - 
   * Backup from on premise **tape to S3 Glacier** using **iSCSI protocol**
+  * VTL - Vistual Tape Library - S3
+  * VTS - Virtual Tape Shelf - Glacier
 * By default, Storage Gateway uses Amazon S3-Managed Encryption Keys (SSE-S3) to server-side encrypt all data it stores in Amazon S3
 
 ## Athena
@@ -292,6 +294,10 @@
   * If your instance has a public IPv4 address, we release the address and give it a new public IPv4 address. The instance retains its private IPv4 addresses, any Elastic IP addresses, and any IPv6 addresses
   * If your instance is in an Auto Scaling group, the Amazon EC2 Auto Scaling service marks the stopped instance as unhealthy, and may terminate it and launch a replacement instance. To prevent this, you can suspend the scaling processes for the group while you're resizing your instance
   * If your instance is in a cluster placement group and, after changing the instance type, the instance start fails, try the following: stop all the instances in the cluster placement group, change the instance type for the affected instance, and then restart all the instances in the cluster placement group
+  * For Amazon EC2 Linux instances using the **cloud-init** service, when a new instance from a standard AWS AMI is launched, the public key of the Amazon EC2 key pair is appended to the initial operating system user’s ~/.ssh/authorized_keys file
+  * For Amazon EC2 Windows instances using the **ec2config** service, when a new instance from a standard AWS AMI is launched, the ec2config service sets a new random Administrator password for the instance and encrypts it using the corresponding Amazon EC2 key pair’s public key
+  * you can set up the operating system authentication mechanisms you want, which might include X.509 certificate authentication, Microsoft Active Directory, or local operating system accounts
+  * 
 
 
 ## EFS
