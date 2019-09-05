@@ -294,11 +294,20 @@
   * If your instance has a public IPv4 address, we release the address and give it a new public IPv4 address. The instance retains its private IPv4 addresses, any Elastic IP addresses, and any IPv6 addresses
   * If your instance is in an Auto Scaling group, the Amazon EC2 Auto Scaling service marks the stopped instance as unhealthy, and may terminate it and launch a replacement instance. To prevent this, you can suspend the scaling processes for the group while you're resizing your instance
   * If your instance is in a cluster placement group and, after changing the instance type, the instance start fails, try the following: stop all the instances in the cluster placement group, change the instance type for the affected instance, and then restart all the instances in the cluster placement group
-  * For Amazon EC2 Linux instances using the **cloud-init** service, when a new instance from a standard AWS AMI is launched, the public key of the Amazon EC2 key pair is appended to the initial operating system user’s ~/.ssh/authorized_keys file
-  * For Amazon EC2 Windows instances using the **ec2config** service, when a new instance from a standard AWS AMI is launched, the ec2config service sets a new random Administrator password for the instance and encrypts it using the corresponding Amazon EC2 key pair’s public key
-  * you can set up the operating system authentication mechanisms you want, which might include X.509 certificate authentication, Microsoft Active Directory, or local operating system accounts
-  * 
-
+* For Amazon EC2 Linux instances using the **cloud-init** service, when a new instance from a standard AWS AMI is launched, the public key of the Amazon EC2 key pair is appended to the initial operating system user’s ~/.ssh/authorized_keys file
+* For Amazon EC2 Windows instances using the **ec2config** service, when a new instance from a standard AWS AMI is launched, the ec2config service sets a new random Administrator password for the instance and encrypts it using the corresponding Amazon EC2 key pair’s public key
+* you can set up the operating system authentication mechanisms you want, which might include X.509 certificate authentication, Microsoft Active Directory, or local operating system accounts
+* The Termination Notice is accessible to code running on the instance via the instance’s metadata at http://169.254.169.254/latest/meta-data/spot/termination-time. This field will become available when the instance has been marked for termination (step 3, above), and will contain the time when a shutdown signal will be sent to the instance’s operating system. At that time, the Spot Instance Request’s bid status will be set to marked-for-termination. The bid status is accessible via the DescribeSpotInstanceRequests API for use by programs that manage Spot bids and instances
+* Amazon recommends that interested applications poll for the termination notice at five-second intervals. This will give the application almost two full minutes to complete any desired processing before it is reclaimed
+* If you get an InstanceLimitExceeded error when you try to launch a new instance or restart a stopped instance, you have reached the limit on the number of instances that you can launch in a region. You can request an instance limit increase on a per-region basis
+* If you get an InsufficientInstanceCapacity error when you try to launch an instance or restart a stopped instance, AWS does not currently have enough available On-Demand capacity to service your request. Wait a few minutes and then submit your request again; capacity can shift frequently
+* The following are a few reasons why an instance might immediately terminate:
+  * You've reached your EBS volume limit
+  * An EBS snapshot is corrupt
+  * The root EBS volume is encrypted and you do not have permissions to access the KMS key for decryption.
+  * The instance store-backed AMI that you used to launch the instance is missing a required part (an image.part.xx file)
+* If the reason is Client.VolumeLimitExceeded: Volume limit exceeded, you have reached your EBS volume limit
+* If the reason is Client.InternalError: Client error on launch, that typically indicates that the root volume is encrypted and that you do not have permissions to access the KMS key for decryption
 
 ## EFS
 
@@ -335,6 +344,7 @@
 * Elastic Load Balancing provides access logs that capture detailed information about requests sent to your load balancer
 * Elastic Load Balancing captures the logs and stores them in the Amazon S3 bucket that you specify as compressed files
 * Each access log file is automatically encrypted before it is stored in your S3 bucket and decrypted when you access it
+* After you add an Availability Zone to the ELB, the load balancer starts routing requests to the registered instances in that Availability Zone. Note that you can modify the Availability Zones for your load balancer at any time
 
 ## Auto Scaling Group
 
@@ -363,6 +373,12 @@
   * Determine whether any of the instances use the oldest launch template
   * Determine whether any of the instances use the oldest launch configuration
   * Instances are closest to the next billing hour
+* You can launch and automatically scale a fleet of On-Demand Instances and Spot Instances within a single Auto Scaling group. In addition to receiving discounts for using Spot Instances, if you specify instance types for which you have matching Reserved Instances, your discounted rate of the regular On-Demand Instance pricing also applies. The only difference between On-Demand Instances and Reserved Instances is that you must purchase the Reserved Instances in advance. All of these factors combined help you to optimize your cost savings for Amazon EC2 instances, while making sure that you obtain the desired scale and performance for your application
+* You enhance availability by deploying your application across multiple instance types running in multiple Availability Zones. You must specify a minimum of two instance types, but it is a best practice to choose a few instance types to avoid trying to launch instances from instance pools with insufficient capacity. If the Auto Scaling group's request for Spot Instances cannot be fulfilled in one Spot Instance pool, it keeps trying in other Spot Instance pools rather than launching On-Demand Instances, so that you can leverage the cost savings of Spot Instances
+* Amazon EC2 Auto Scaling provides two types of allocation strategies that can be used for Spot Instances:
+  * capacity-optimized - The capacity-optimized strategy automatically launches Spot Instances into the most available pools by looking at real-time capacity data and predicting which are the most available. By offering the possibility of fewer interruptions, the capacity-optimized strategy can lower the overall cost of your workload
+  * lowest-price - Amazon EC2 Auto Scaling allocates your instances from the number (N) of Spot Instance pools that you specify and from the pools with the lowest price per unit at the time of fulfillment
+* An Auto Scaling group is associated with one launch configuration at a time, and you can't modify a launch configuration after you've created it. To change the launch configuration for an Auto Scaling group, use an existing launch configuration as the basis for a new launch configuration. Then, update the Auto Scaling group to use the new launch configuration. After you change the launch configuration for an Auto Scaling group, any new instances are launched using the new configuration options, but existing instances are not affected
 
 ## EBS
 
@@ -981,6 +997,14 @@
 
 * AWS Budgets gives you the ability to set custom budgets that alert you when your costs or usage exceed (or are forecasted to exceed) your budgeted amount
 * You can also use AWS Budgets to set reservation utilization or coverage targets and receive alerts when your utilization drops below the threshold you define
+
+## AWS Backup
+
+* AWS Backup is a fully managed backup service that makes it easy to centralize and automate the back up of data across AWS services in the cloud as well as on premises using the AWS Storage Gateway. Using AWS Backup, you can centrally configure backup policies and monitor backup activity for AWS resources, such as Amazon EBS volumes, Amazon RDS databases, Amazon DynamoDB tables, Amazon EFS file systems, and AWS Storage Gateway volumes
+
+* Amazon Data Lifecycle Management (DLM) policies and backup plans created in AWS Backup work independently from each other and provide two ways to manage EBS snapshots. DLM provides a simple way to manage the lifecycle of EBS resources, such as volume snapshots. You should use DLM when you want to automate the creation, retention, and deletion of EBS snapshots. You should use AWS Backup to manage and monitor backups across the AWS services you use, including EBS volumes, from a single place
+
+* Amazon EFS backup functionality is built on AWS Backup
 
 ## Scenario Question Tips
 
