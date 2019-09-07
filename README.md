@@ -138,31 +138,104 @@
 * Supports at least 3,500 requests per second to add data and 5,500 requests per second to retrieve
 * Server access logging provides detailed records for the requests that are made to a bucket
 
-## Cloudfront
+## CloudFront
 
-* Content Delivery Network (CDN)
-* **Cache content** at edge location
+* Content Delivery Network (CDN) - reduced latency and reduced load on server
+* Reasons for good performance -
+  * **Cache content** at edge location POP (Point of Presence)
+  * **Regional edge caches** with larger caches than POP and holding less popular contents between POP and origin server
+  * Data transfer over **Amazon's backbone network** between the origin server and the edge location
+  * **Persistent connections** with the origin server
+* Default caching behavior - 
+  * period - 24 hours
+  * Don't cache based on caching headers
+* You can use the Cache-Control and Expires headers to control how long objects stay in the cache. Settings for Minimum TTL, Default TTL, and Maximum TTL also affect cache duration
+* After a file expires in cache, the next time the edge location gets a user request for the file, CloudFront forwards the request to the origin server to verify that the cache contains the latest version of the file. The response from the origin depends on whether the file has changed:
+  * If the CloudFront cache already has the latest version, the origin returns a 304 status code (Not Modified)
+  * If the CloudFront cache does not have the latest version, the origin returns a 200 status code (OK) and the latest version of the file
+* By default, CloudFront don't automatically compress contents
+* To access the contents from domain,, say www.example.com
+  * Add a CNAME in CloudFront for www.example.com
+  * Add a CNAME in DNS to route traffic to the CloudFront for a query against www.example.com
+* Choose a certificate to use that covers the alternate domain name. The list of certificates can include any of the following:
+  * Certificates provided by AWS Certificate Manager
+  * Certificates that you purchased from a third-party certificate authority and uploaded to ACM
+  * Certificates that you purchased from a third-party certificate authority and uploaded to the IAM certificate store
 * Popular with S3, but also works with **EC2 & Load Balancer**
 * Supports **RTMP (media)** protocol
-* **Reduced latency** and reduced load on server
-* **Origin Access Identity (OAI)** is an user used by Cloudfront to access the S3 files
+* Video content
+  * HTTP / HTTPS
+    * Apple HTTP Live Streaming (HLS)
+    * Microsoft Smooth Streaming
+  * RTMP
+    * Adobe Flash multimedia content
+* **Origin Access Identity (OAI)** is an user used by CloudFront to access the S3 files
 * **S3 bucket policy** gives access to OAI and thus preventing users from directly accessing the S3 files bypassing the Cloudfront
-* Cloudfront **accesslogs** can be stored in an S3 bucket
-* To serve the media of a WordPress website from Cloudfront use the Apache .htaccess file to rewrite the URLs
-* Supports **SNI** (Server Name Indication). This allows Cloudfront distributions to support multiple TLS certificates
+* CloudFront **accesslogs** can be stored in an S3 bucket - contains detailed information about every user request that CloudFront receives
+* To serve the media of a WordPress website from CloudFront use the Apache .htaccess file to rewrite the URLs
+* Supports **SNI** (Server Name Indication). This allows CloudFront distributions to support multiple TLS certificates
 * The data transfer out of CloudFront is not chargeable
-* **Invalidation requests** to remove something from the cache is chargeable
+* **Invalidation requests** to remove something from the cache is chargeable - removes both from regional edge cache and POP. Avoid invalidation request charges and unpredictable caching behavior use versions in file names or directory names for changes to take effect immediately (Only invalidation of index.html) migh be required
+* An invalidation path that includes the * wildcard counts as one path even if it causes CloudFront to invalidate thousands of files
 * CloudFront supports **Field Level Encryption**, so that the sensitive data can only be decrypted and viewed by certain components or services in the application stack
 * To use **Field Level Ecryption**, the specific fields and encryption public key need to be configured in CloudFront
-* Use signed URLs for the following cases:
+* Use **signed URLs** for the following cases:
   * RTMP distribution. Signed cookies aren't supported for RTMP distributions.
   * Restrict access to individual files, for example, an installation download for your application.
   * Users are using a client (for example, a custom HTTP client) that doesn't support cookies.
-* Use signed cookies for the following cases:
+* Use **signed cookies** for the following cases:
   * Provide access to multiple restricted files, for example, all of the files for a video in HLS format or all of the files in the subscribers' area of a website
   * You don't want to change your current URLs
-* You can configure CloudFront to create log files that contain detailed information about every user request that CloudFront receives
-* If you enable logging, you can also specify the Amazon S3 bucket that you want CloudFront to save files in
+* Charges are applicable for - 
+  * Serving contents from edge locations
+  * Transfering data to your origin, which includes DELETE, OPTIONS, PATCH, POST, and PUT requests
+  * HTTPS requests
+  * Field level encryption
+* **Price class** - collection fo edge locations for the purpose of controlling cost
+* Contents are served only from the edge locations of the selected **price class**
+* Default **price class** includes all edge locations including the expensive ones
+* If you want to allow anyone to access the files in your Amazon S3 bucket using CloudFront URLs, you must grant public read permissions to the objects unless you secure your content in Amazon S3 by using a CloudFront origin access identity
+* If S3 is used as an origin server, the bucket name should be in all lowercase and cannot contain space
+* For a given distribution, multiple origins can be configured including both S3 and HTTP servers (EC2 / external servers) 
+* If you have two origins and only the default cache behavior, the default cache behavior will cause CloudFront to get objects from one of the origins, but the other origin will never be used. Hence a separate cache behavior needs to be configured for each origin specifying which URL path will be routed to which origin
+* CloudFront does not consider query strings or cookies when evaluating the path pattern
+* CloudFront caches responses to GET and HEAD requests and, optionally, OPTIONS requests. CloudFront does not cache responses to requests that use the other methods
+* GET, HEAD, OPTIONS, PUT, POST, PATCH, DELETE: You can use CloudFront to get, add, update, and delete objects, and to get object headers. In addition, you can perform other POST operations such as submitting data from a web form
+* Cache Based on Selected Request Headers
+  * **None (improves caching)** – CloudFront doesn't cache your objects based on header values
+  * **Whitelist** – CloudFront caches your objects based only on the values of the specified headers. Use Whitelist Headers to choose the headers that you want CloudFront to base caching on
+  * **All** – CloudFront doesn't cache the objects that are associated with this cache behavior. Instead, CloudFront sends every request to the origin (Not recommended for Amazon S3 origins)
+* CloudFront can cache different versions of your content based on the values of query string parameters. Options are:
+  * **None (Improves Caching)** - origin returns the same version of an object regardless of the values of query string parameters
+  * **Forward all, cache based on whitelist** - if your origin server returns different versions of your objects based on one or more query string parameters. Then specify the parameters that you want CloudFront to use as a basis for caching
+  * **Forward all, cache based on all** - if your origin server returns different versions of your objects for all query string parameters
+* Supports specifying custom error page based on HTTP response code
+* Supports websocket
+* You cannot invalidate objects that are served by an RTMP distribution
+* Using CloudFront can be more cost effective if your users access your objects frequently because, at higher usage, the price for CloudFront data transfer is lower than the price for Amazon S3 data transfer
+* If distribution is configured to compress files, CloudFront determines whether the file is compressible:
+  * The file must be of a type that CloudFront compresses.
+  * The file size must be between 1,000 and 10,000,000 bytes.
+  * The response must include a Content-Length header so CloudFront can determine whether the size of the file is in the range that CloudFront compresses. If the Content-Length header is missing, CloudFront won't compress the file
+  * The response must not include a Content-Encoding header
+  * If you configure CloudFront to compress content, CloudFront removes the ETag response header from the files that it compresses. When the ETag header is present, CloudFront and your origin can use it to determine whether the version of a file in a CloudFront edge cache is identical to the version on the origin server. However, after compression the two versions are no longer identical. As a result, when a compressed file expires and CloudFront forwards another request to your origin, your origin always returns the file to CloudFront instead of an HTTP status code 304 (Not Modified)
+* CloudFront compresses files in each edge location when it gets the files from your origin. When you configure CloudFront to compress your content, it doesn't compress files that are already in edge locations. In addition, when a file expires in an edge location and CloudFront forwards another request for the file to your origin, CloudFront doesn't compress the file if your origin returns an HTTP status code 304, which means that the edge location already has the latest version of the file. If you want CloudFront to compress the files that are already in edge locations, you'll need to invalidate those files
+* CloudFront does not compress a file if the response includes a Content-Encoding header, regardless of the value
+* You might not find the imported certificate or ACM certificate if - (Note - IAM certificate store supports ECDSA):
+  * The certificate imported into ACM is using an algorithm other that 1024-bit RSA or 2048-bit RSA.
+  * The ACM certificate wasn't requested in the same AWS Region as your load balancer or CloudFront distribution
+* To require that users access content through CloudFront, change the following settings in your CloudFront distributions:
+  * Origin Custom Headers - Configure CloudFront to forward custom headers to your origin (headers should be rotated periodically)
+  * Viewer Protocol Policy - Configure your distribution to require viewers to use HTTPS to access CloudFront 
+  * Origin Protocol Policy - Configure your distribution to require CloudFront to use the same protocol as viewers to forward requests to the origin (Headers will remain encrypted)
+* To create signed cookies or signed URLs
+  * identify an AWS account as a trusted signer
+  * create a CloudFront key pair for the trusted signer
+  * assign the trusted signer to the distribution or a specific cache behvior
+* Web didtributions can add a trusted signer to a specific cache behavior and thus using signed cookie or signed URL for a specific set of files only. However, for RTMP distributions, it has to be for the entire distribution
+* For signed URLs CloudFront checks if the URL has expired only at the begining of the download or play. If after the download or streaming starts the URL expires, the download or streaming will continue
+* Geo restriction applies to an entire web distribution. If you need to apply one restriction to part of your content and a different restriction (or no restriction) to another part of your content, you must either create separate CloudFront web distributions or use a third-party geolocation service
+* CloudFront uses algorithm RSA/ECB/OAEPWithSHA-256AndMGF1Padding for field level encryption
 
 ## Snowball
 
@@ -216,6 +289,27 @@
 * **Users** for individuals
 * **User Groups** for grouping users with similar permission requirements
 * **Roles** are for machines or internal AWS resources. One IAM Role for ONE application
+* You can create an identity broker that sits between your corporate users and your AWS resources to manage the authentication and authorization process without needing to recreate all your users as IAM users in AWS. The identity broker application has permissions to access the AWS Security Token Service (STS) to request temporary security credentials
+* Login to EC2 operating system can be done using:
+  * Assymmetric key pair
+  * Local operating users
+  * Active Directory
+* Two types of policies
+  * Resource policies - Attached to the individual resources
+  * Capability policies - Attached to IAM users, groups or roles
+* Resource policies and capability policies and are cumulative in nature: An individual user’s effective permissions is the union of a resources policies and the capability permissions granted directly or through group membership. However, the resource policy permissions can be denied explicitly in the capability policy
+* IAM policies can be used to restrict access to a specific source IPaddress range, or during specific days and times of the day, as well as based on other conditions
+* You can set up CloudFront with origin failover for scenarios that require high availability. To get started, create an origin group in which you designate a primary origin for CloudFront plus a second origin that CloudFront automatically switches to when the primary origin returns specific HTTP status code failure responses
+* If you want CloudFront to cache different versions of your objects based on the device a user is using to view your content, configure CloudFront to forward the applicable headers to your custom origin:
+  * CloudFront-Is-Desktop-Viewer
+  * CloudFront-Is-Mobile-Viewer
+  * CloudFront-Is-SmartTV-Viewer
+  * CloudFront-Is-Tablet-Viewer
+* If you want CloudFront to cache different versions of your objects based on the language specified in the request, program your application to include the language in the Accept-Language header, and configure CloudFront to forward the Accept-Language header to your origin
+* If you want CloudFront to cache different versions of your objects based on the country that the request came from, configure CloudFront to forward the CloudFront-Viewer-Country header to your origin
+* If you want CloudFront to cache different versions of your objects based on the protocol of the request, HTTP or HTTPS, configure CloudFront to forward the CloudFront-Forwarded-Proto header to your origin
+* If your origin supports Brotli compression, you can whitelist the Accept-Encoding header and cache based on the header. You should configure caching based on Accept-Encoding only if your origin serves different content based on the header
+* Caching based on query parameters and cookies are also possible with the similar options. It is recommended to forward only those cookies or query parameters to the origin server for which the server returns different objects. This will reduce the load on the server and let CloudFront serve requests from the edge location cache
 
 ## EC2
 
@@ -457,6 +551,12 @@
 * EBS encrypts your volume with a data key using the industry-standard AES-256 algorithm. Your data key is stored on-disk with your encrypted data, but not before EBS encrypts it with your CMK; it never appears on disk in plaintext
 * When you have access to both an encrypted and unencrypted volume, you can freely transfer data between them. EC2 carries out the encryption and decryption operations transparently
 * To create snapshots for Amazon EBS volumes that are configured in a RAID array, there must be no data I/O to or from the EBS volumes that comprise the RAID array. These same precautions and steps should be followed whenever you create a snapshot of an EBS volume that serves as the root device for an EC2 instance
+* Although snapshots are incremental, snapshots are designed in such a way that retaining the last snapshot is sufficient to recover the complete volume data. Deleting the old snapshots may not reduce the occupied storage. Snapshots copy only the data that have changed since the last snapshot was taken and points to the unchanged data of the last snapshot
+
+![Snapshot Deletion](snapshot_1b.png)
+
+* Note that you can't delete a snapshot of the root device of an EBS volume used by a registered AMI. You must first deregister the AMI before you can delete the snapshot
+* To take a consistent snapshot, unmount the volume, initiate the snapshot and mount it back (The ongoing reads and writes do not affect the snapshot once it is started)
 
 ## CloudWatch
 
@@ -888,6 +988,7 @@
 * Rate based rule allows you to specify the number of web requests that are allowed by a client IP in a trailing, continuously updated, 5 minute period
 * Rate based rule is designed to protect the app from use cases such web-layer DDoS attacks, brute force login attempts and bad bots
 * The custmers can create rules to filter web traffic based on conditions that include IP addresses, HTTP headers and body, or custom URIs
+* WAF can be used with both ALB & CloudFront
 
 ## Amazon Macie
 
@@ -952,6 +1053,9 @@
   * Offload the SSL/TLS Processing for Web Servers
 * Dedicated hardware - not shared with other AWS customers. It may be useful to meet certain compliance requirements
 * Your KMS customer master keys (CMKs) never leave the CloudHSM instances, and all KMS operations that use those keys are only performed in your HSMs
+* CloudHSM currently uses Luna SA HSMs from SafeNet
+* You can implement CloudHSMs in multiple Availability Zones with replication between them to provide for high availability and storage resilience
+* 
 
 ## AWS KMS
 
