@@ -571,12 +571,13 @@
 * CloudWatch Alarms can be created to 
   * send SNS notifications
   * do EC2 autoscaling when a certain metrics satisfies a configured condition
-  * do EC2 actions
+  * do EC2 actions (Against EC2 metrics only)
     * Recover - Recover the instance on different hardware
     * Stop
     * Terminate
     * Reboot
-* CloudWatch Events allow the user to configure a Lambda function to be triggered on certain system events
+* CloudWatch Events allow users to do some activity (by triggering a Lambda function) on real time when some system change happens. CloudTrail cannot do this because CloudTrail deliver logs in around 15 minutes interval
+* CloudWatch Events doesn't get triggered on read events
 * CloudWatch Alarms 
   * impaired - checks failed
   * insufficient data - checks in progress 
@@ -1159,3 +1160,29 @@ Automatic load balancing, auto scaling etc. | AWS Elastic Beanstalk
 KMS Custom Key Store | CloudHSM
 Single tenant key access | CloudHSM
 Services encrypted by default | Glacier, Storage Gateway, CloudTrail
+
+## Serverless Services
+
+* Compute
+  * AWS Lambda
+  * Lambda@Edge
+  * AWS Fargate
+* Storage 
+  * Amazon S3
+  * Amazon EFS
+* Data Stores
+  * Amazon DynamoDB
+  * Amazon Aurora Serverless
+* API Proxy
+  * Amazon API Gateway
+* Application Integration
+  * Amazon SQS
+  * Amazon SNS
+  * AWS AppSync
+  * Amazon EventBridge
+* Orchestration
+  * Amazon Step Functions
+* Analytics
+  * Amazon Kinesis
+  * Amazon Athena
+  * Glue
