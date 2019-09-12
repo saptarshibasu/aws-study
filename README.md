@@ -402,6 +402,19 @@
   * The instance store-backed AMI that you used to launch the instance is missing a required part (an image.part.xx file)
 * If the reason is Client.VolumeLimitExceeded: Volume limit exceeded, you have reached your EBS volume limit
 * If the reason is Client.InternalError: Client error on launch, that typically indicates that the root volume is encrypted and that you do not have permissions to access the KMS key for decryption
+* To change the instance type of EC2, the instance must be stopped
+* EC2 shutdown behavior (Behavior when shutdown signal is sent from inside the OS by running the shutdown command) -
+  * Stopped (Default) - The instance will be stopped on receiving the shutdown signal
+  * Terminated - The instance will be terminated on receiving the shutdown signal
+* With shutdown protection turned on, the instnce cannot be terminated from the console until the shutdown protection is turned off
+* Even with shutdown protection on, if the instance has its shutdown behavior as terminated, the shutdown initiated from the OS will terminate the instance
+* Instance Type 
+  * R - More RAM (use cases - in-memory caches)
+  * C - More CPU (use cases - compute / databases)
+  * M - Medium (use cases - general / webapp)
+  * I - More I/O - instance storage (use cases - databases)
+  * G - More GPU - (use cases - video rendering / machine learning)
+  * T2/T3 - burstable instances (up to a capacity / unlimited)
 
 ## EFS
 
@@ -813,12 +826,6 @@
 * By default, a query for a public hostname of an instance in a peered VPC in a different region will resolve to a public IP address. Route 53 private DNS can be used to resolve to a private IP address with Inter-Region **VPC Peering**
 * Inter-Region **VPC Peering** doesn't support IPv6
 * Services that cannot be used over **VPC Peering** - EFS, Network Load Balancer, AWS PrivateLink
-* **Accessing a service from a different region without going through internet** - 
-  * Use a inter-region VPC peering to connect the two provider VPC in different regions
-  * Use a Network Load Balancer in the secondary provider VPC to connect to the primary VPC service over VPC peering
-
-  ![Image of inter-Region solution for VPC Endpoint](inter-region-peering-provider-side.png)
-
 * On creation of a VPC, a default route table, NACL and security group are automatically created. Subnets and Internet Gateways are not automatically created
 * US-East-1A in one AWS account can be completely different from US-East-1A in another AWS account
 * **Traffic Flow** - 
@@ -1186,3 +1193,12 @@ Services encrypted by default | Glacier, Storage Gateway, CloudTrail
   * Amazon Kinesis
   * Amazon Athena
   * Glue
+
+## Common Architecture
+
+* **Accessing a service from a different region without going through internet** - 
+  * Use a inter-region VPC peering to connect the two provider VPC in different regions
+  * Use a Network Load Balancer in the secondary provider VPC to connect to the primary VPC service over VPC peering
+
+  ![Image of inter-Region solution for VPC Endpoint](inter-region-peering-provider-side.png)
+
