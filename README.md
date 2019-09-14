@@ -523,16 +523,14 @@
 * EC2 **User Data** script runs once (with root privileges) at the instance first start
 * EC2 Launch types - 
   * **On-demand instances** - short workload, predictable pricing
-  * **Reserved instances** - long workload (>= 1 year)
-  * **Convertible reserved instances** - long workload with flexible instance types
+  * **Reserved instances** - long workload (>= 1 year) - upto 75% discount
+  * **Convertible reserved instances** - long workload with flexible instance types - upto 54% discount
   * **Scheduled reserved instances** - reserved for specific time window
-  * **Spot instances** - short workload, cheap, can lose instances, good for batch jobs, big data analytics etc.
+  * **Spot instances** - short workload, cheap, can lose instances, good for batch jobs, big data analytics etc. - upto 90% discount
   * **Dedicated instances** - no other customer will share the hardware, but instances from same AWS account can share hardware, no control on instance placement
-  * **Dedicated hosts** - the entire server is reserved, provides more control on instance placement, more visibility into sockets and cores, good for "bring your own licenses (BYOL)", complicated regulatory needs
+  * **Dedicated hosts** - the entire server is reserved, provides more control on instance placement, more visibility into sockets and cores, good for "bring your own licenses (BYOL)", complicated regulatory needs - 3 year period reservation
 * **Billing** by second with a minimum of 60 seconds
 * **Spot Price** - If you terminate your instance, you pay for any partial hour used (as you do for On-Demand or Reserved Instances). However, you are not charged for any partial hour of usage if the Spot price goes above your maximum price and Amazon EC2 interrupts your Spot Instance
-* A custom **AMI** can be created with pre-installed software packages, security patches etc. instead of writing user data scripts, so that the boot time is less during autoscaling
-* **AMIs** are built for a specific region, but can be copied across regions
 * T2/T3 are **burstable** instances. Spikes are handled using burst credits that are accumulated over time. If burst credits are all consumed, performance will suffer
 * **M instance types** are balanced
 * `http://169.254.169.254/latest/user-data/` gives **user data** scripts
@@ -541,7 +539,7 @@
 * `http://169.254.169.254/latest/meta-data/local-ipv4/` gives **local IP**
 * Two types of **placement groups**
   * **Clustered Placement Group** - 
-    * Grouping of instances within a single AZ
+    * Grouping of instances within a single AZ, single rack
     * Use cases - recommended for applications that need low network latency and high network throughput
     * Only certain specific instance types can be launched in this placement group
     * cannot span multiple AZ
@@ -550,12 +548,12 @@
     * use cases - large distributed and replicated workloads, such as Hadoop, Cassandra, and Kafka
     * each partition within a placement group has its own set of racks. Each rack has its own network and power source
     * allows max 7 instances per AZ
-    * Partitions can be distributed across AZ
-    * Provides visibility as to which instance belongs to which partition
+    * partitions can be distributed across AZ
+    * provides visibility as to which instance belongs to which partition through metadata
     * not supported for Dedicated Hosts
     * dedicated Instances can have a maximum of two partitions
   * **Spread Placement Group** - 
-    * Instances are placed in distinct hardware
+    * instances are placed in distinct hardware
     * each intance is placed on distinct racks, with each rack having its own network and power source
     * use cases - recommended for applications that have a small number of critical instances that should be kept separate from each other
     * can span multiple AZ
@@ -564,9 +562,6 @@
 * The instances within a **placement group** should be homogeneous
 * **Placement groups** can't be merged
 * You can move an existing instance to a **placement group**, move an instance from one placement group to another, or remove an instance from a placement group. Before you begin, the instance must be in the stopped state
-* AWS **AMI Virtualization types** - 
-  * Paravirtual (PV)
-  * Hardware Virtual Machine (HVM) - Amazon recommends
 * **Instance store** backed EC2 instances can only be rebooted and terminated. They cannot be stopped unlike EBS-backed instances
 * With **instance store**, the entire image is downloaded from S3 before booting and hence the boot time is usually around 5 mins
 * **EBS-backed instances** once stopped, all data in any attached **instance store** will be deleted
@@ -580,6 +575,11 @@
   * stopping (The instannce is preparing to hibernate - NOT when the instance is being stopped)
   * terminated (for reserved instances only that are still in their contracted term)
 * Select **Auto-assign Public IP** option so that the launched EC2 instance has a public IP from Amazon's public IP pool
+* A custom **AMI** can be created with pre-installed software packages, security patches etc. instead of writing user data scripts, so that the boot time is less during autoscaling
+* **AMIs** are built for a specific region, but can be copied across regions
+* AWS **AMI Virtualization types** - 
+  * Paravirtual (PV)
+  * Hardware Virtual Machine (HVM) - Amazon recommends
 * All **AMIs are categorized** as either 
   * backed by Amazon EBS or 
   * backed by instance store
@@ -587,6 +587,11 @@
 * During the **AMI**-creation process, Amazon EC2 creates snapshots of your instance's root volume and any other EBS volumes attached to your instance. You're charged for the snapshots until you deregister the AMI and delete the snapshots
 * If any volumes attached to the instance are encrypted, the new **AMI** only launches successfully on instances that support Amazon EBS encryption
 * Encrypting during the CopyImage action applies only to Amazon EBS-backed **AMI**s. Because an instance store-backed AMI does not rely on snapshots, you cannot use copying to change its encryption status
+* AWS does not copy launch permissions, user-defined tags, or Amazon S3 bucket permissions from the source **AMI** to the new AMI
+* You can't copy an AMI that was obtained from the AWS Marketplace, regardless of whether you obtained it directly or it was shared with you. Instead, launch an EC2 instance using the AWS Marketplace AMI and then create an AMI from the instance
+* If you copy an **AMI** that has been shared with your account, you are the owner of the target AMI in your account. The owner of the source AMI remains unchanged
+* To copy an **AMI** that was shared with you from another account, the owner of the source AMI must grant you read permissions for the storage that backs the AMI, either the associated EBS snapshot (for an Amazon EBS-backed AMI) or an associated S3 bucket (for an instance store-backed AMI). If the shared AMI has encrypted snapshots, the owner must share the key or keys with you as well
+* If you specify encryption parameters while copying an AMI, you can encrypt or re-encrypt its backing snapshots
 * To coordinate Availability Zones across accounts, you must use the **AZ ID**, which is a unique and consistent identifier for an Availability Zone because us-east-1a AZ of one AWS account may not be same as us-east-1b of another AWS account
 * When an instance is terminated, Amazon Elastic Compute Cloud (Amazon EC2) uses the value of the **DeleteOnTermination** attribute for each attached EBS volume to determine whether to preserve or delete the volume when the instance is terminated
 * By default, the **DeleteOnTermination** attribute for the root volume of an instance is set to true, but it is set to false for all other volume types
@@ -607,14 +612,21 @@
 * You can set up the operating system authentication mechanism you want, which might include X.509 certificate authentication, Microsoft Active Directory, or local operating system accounts
 * For spot instance,
   * The **Termination Notice** will be available 2 minutes before termination
-  * The **Termination Notice** is accessible to code running on the instance via the instance’s metadata at http://169.254.169.254/latest/meta-data/spot/termination-time
+  * The **Termination Notice** is accessible to code running on the instance via the instance’s metadata at `http://169.254.169.254/latest/meta-data/spot/termination-time`
   * The **spot/termination-time** metadata field will become available when the instance has been marked for termination
   * The **spot/termination-time** metadata field will contain the time when a shutdown signal will be sent to the instance’s operating system
   * The Spot Instance Request’s bid status will be set to marked-for-termination
   * The bid status is accessible via the **DescribeSpotInstanceRequests** API for use by programs that manage Spot bids and instances
 * Amazon recommends that interested applications poll for the **termination notice** at five-second intervals
-* If you get an **InstanceLimitExceeded** error when you try to launch a new instance or restart a stopped instance, you have reached the limit on the number of instances that you can launch in a region. You can request an instance limit increase on a per-region basis
-* If you get an **InsufficientInstanceCapacity** error when you try to launch an instance or restart a stopped instance, it indicates AWS does not currently have enough available On-Demand capacity to service your request. Wait a few minutes and then submit your request again; capacity can shift frequently
+* If you get an **InstanceLimitExceeded** error when you try to launch a new instance or restart a stopped instance, you have reached the limit on the number of instances that you can launch in a region. Possible solutions
+  * request an instance limit increase on a per-region basis
+  * Launch the instance in a different region
+* If you get an **InsufficientInstanceCapacity** error when you try to launch an instance or restart a stopped instance, it indicates AWS does not currently have enough available On-Demand capacity to service your request. Possible solutions
+  * Wait a few minutes and then submit your request again; capacity can shift frequently
+  * Submit a new request with a reduced number of instances
+  * If you're launching an instance, submit a new request without specifying an Availability Zone
+  * If you're launching an instance, submit a new request using a different instance type
+  * If you are launching instances into a cluster placement group, you can get an insufficient capacity error
 * The following are a few reasons why an instance might **immediately terminate**:
   * You've reached your EBS volume limit
   * An EBS snapshot is corrupt
@@ -622,6 +634,11 @@
   * The instance store-backed AMI that you used to launch the instance is missing a required part (an image.part.xx file)
   * If the reason is **Client.VolumeLimitExceeded: Volume limit exceeded**, you have reached your EBS volume limit
   * If the reason is **Client.InternalError: Client error on launch**, that typically indicates that the root volume is encrypted and that you do not have permissions to access the KMS key for decryption
+* Make sure the private key (pem file) on your linux machine has 400 permissions, else you will get **Unprotected Private Key File error**
+* Make sure the username for the OS is given correctly when logging via SSH, else you will get **Host key not found** error
+* Possible reasons for ‘connection timeout’ to EC2 instance via SSH :
+  * Security Group is not configured correctly
+  * CPU load of the instance is high
 * EC2 **shutdown behavior** (Behavior when shutdown signal is sent from inside the OS by running the shutdown command) -
   * Stopped (Default) - The instance will be stopped on receiving the shutdown signal
   * Terminated - The instance will be terminated on receiving the shutdown signal
