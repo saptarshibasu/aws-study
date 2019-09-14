@@ -402,6 +402,15 @@
   * **Origin Custom Headers** - Configure CloudFront to forward custom headers to your origin (headers should be rotated periodically). Origin server to deny requests not containing correct header
   * **Viewer Protocol Policy** - Configure your distribution to require viewers to use HTTPS to access CloudFront 
   * **Origin Protocol Policy** - Configure your distribution to require CloudFront to use the same protocol as viewers to forward requests to the origin (This ensures the headers will remain encrypted)
+* If you want CloudFront to cache different versions of your objects based on the user device, configure CloudFront to forward the applicable headers to your custom origin:
+  * CloudFront-Is-Desktop-Viewer
+  * CloudFront-Is-Mobile-Viewer
+  * CloudFront-Is-SmartTV-Viewer
+  * CloudFront-Is-Tablet-Viewer
+* To cache different versions of your objects based on the **language** specified in the request, program your application to include the language in the Accept-Language header, and configure CloudFront to forward the Accept-Language header to your origin
+* To cache different versions of your objects based on the **country** that the request came from, configure CloudFront to forward the CloudFront-Viewer-Country header to your origin
+* To cache different versions of your objects based on the **protocol** of the request, HTTP or HTTPS, configure CloudFront to forward the CloudFront-Forwarded-Proto header to your origin
+* Caching based on query parameters and cookies are also possible with the similar options. It is recommended to forward only those cookies or query parameters to the origin server for which the server returns different objects
 * To create **signed cookies** or **signed URLs**
   * identify an AWS account as a **trusted signer**
   * create a CloudFront **key pair** for the trusted signer
@@ -409,6 +418,7 @@
 * Web didtributions can add a trusted signer to a specific cache behavior and thus using **signed cookie** or **signed URL** for a specific set of files only. However, for RTMP distributions, it has to be for the entire distribution
 * For **signed URLs** CloudFront checks if the URL has expired only at the begining of the download or play. If after the download or streaming starts the URL expires, the download or streaming will continue
 * **Geo restriction** applies to an entire web distribution. If you need to apply one restriction to part of your content and a different restriction (or no restriction) to another part of your content, you must either create separate CloudFront web distributions or use a third-party geolocation service
+* You can set up CloudFront with **origin failover** for scenarios that require high availability. To get started, create an origin group in which you designate a primary origin for CloudFront plus a second origin that CloudFront automatically switches to when the primary origin returns specific HTTP status code failure responses
 
 
 ## Snowball
@@ -437,6 +447,7 @@
 [TOC](#table-of-content)
 
 * Storage Gateway supports **hybrid cloud** by allowing the on-primise resources access the cloud storage like EBS, S3 etc. through standard protocols
+* By default, Storage Gateway uses Amazon S3-Managed Encryption Keys (SSE-S3) to server-side encrypt all data it stores in Amazon S3
 * Storage Gateway **types** - 
   * File Gateway
   * Volume Gateway
@@ -453,9 +464,10 @@
   * **Stored Volume** - Entire dataset in premise with scheduled backups in S3
 * **Tape Gateway** - 
   * Backup from on premise **tape to S3 Glacier** using **iSCSI protocol**
-  * VTL - Vistual Tape Library - S3
-  * VTS - Virtual Tape Shelf - Glacier
-* By default, Storage Gateway uses Amazon S3-Managed Encryption Keys (SSE-S3) to server-side encrypt all data it stores in Amazon S3
+  * VTL - Virtual Tape Library - S3
+  * VTS - Virtual Tape Shelf - Glacier or Glacier Deep Archive
+
+![Tape Gateway Deployment](Gateway-VTL-Architecture2-diagram.png)
 
 
 ## Athena
@@ -477,27 +489,17 @@
 * **Users** for individuals
 * **User Groups** for grouping users with similar permission requirements
 * **Roles** are for machines or internal AWS resources. One IAM Role for ONE application
-* You can create an identity broker that sits between your corporate users and your AWS resources to manage the authentication and authorization process without needing to recreate all your users as IAM users in AWS. The identity broker application has permissions to access the AWS Security Token Service (STS) to request temporary security credentials
-* Login to EC2 operating system can be done using:
+* You can create an identity broker that sits between your corporate users and your AWS resources to manage the authentication and authorization process without needing to recreate all your users as IAM users in AWS. The identity broker application has permissions to access the **AWS Security Token Service (STS)** to request temporary security credentials
+* **Login to EC2** operating system can be done using:
   * Assymmetric key pair
   * Local operating users
   * Active Directory
-* Two types of policies
+  * Session Manager of AWS Systems Manager
+* Two **types of policies**
   * Resource policies - Attached to the individual resources
   * Capability policies - Attached to IAM users, groups or roles
 * Resource policies and capability policies and are cumulative in nature: An individual user’s effective permissions is the union of a resources policies and the capability permissions granted directly or through group membership. However, the resource policy permissions can be denied explicitly in the capability policy
 * IAM policies can be used to restrict access to a specific source IPaddress range, or during specific days and times of the day, as well as based on other conditions
-* You can set up CloudFront with origin failover for scenarios that require high availability. To get started, create an origin group in which you designate a primary origin for CloudFront plus a second origin that CloudFront automatically switches to when the primary origin returns specific HTTP status code failure responses
-* If you want CloudFront to cache different versions of your objects based on the device a user is using to view your content, configure CloudFront to forward the applicable headers to your custom origin:
-  * CloudFront-Is-Desktop-Viewer
-  * CloudFront-Is-Mobile-Viewer
-  * CloudFront-Is-SmartTV-Viewer
-  * CloudFront-Is-Tablet-Viewer
-* If you want CloudFront to cache different versions of your objects based on the language specified in the request, program your application to include the language in the Accept-Language header, and configure CloudFront to forward the Accept-Language header to your origin
-* If you want CloudFront to cache different versions of your objects based on the country that the request came from, configure CloudFront to forward the CloudFront-Viewer-Country header to your origin
-* If you want CloudFront to cache different versions of your objects based on the protocol of the request, HTTP or HTTPS, configure CloudFront to forward the CloudFront-Forwarded-Proto header to your origin
-* If your origin supports Brotli compression, you can whitelist the Accept-Encoding header and cache based on the header. You should configure caching based on Accept-Encoding only if your origin serves different content based on the header
-* Caching based on query parameters and cookies are also possible with the similar options. It is recommended to forward only those cookies or query parameters to the origin server for which the server returns different objects. This will reduce the load on the server and let CloudFront serve requests from the edge location cache
 
 
 ## EC2
@@ -505,18 +507,18 @@
 [TOC](#table-of-content)
 
 * **Security Groups** are for network security
-* **Security group**s are locked down to a region / VPC combination
-* **Security Groups** can refer to other Security Groups
+* **Security Groups** are locked down to a region / VPC combination
+* **Security Groups** can refer to other Security Groups. For e.g. to ensure that a web server in an EC2 instance serves requests only from an ALB, assign a security group to EC2 to open port 80 for traffic from the security group of the ALB
 * One **security group** can be attached to multiple EC2 instances
 * Multiple **security groups** can be assigned to a single EC2 instance
 * If connection to application times out, it could be a **security group** issue. If connection is refused, it's an application issue
 * **Security Group** - All inbound traffic is blocked by default
 * **Security Group** - All outbound traffic is authorized by default
-* **Security Groups** are stateful - if the inbound traffic on a port is allowed, outbound traffic on the same port is automatically allowed
+* **Security Groups** are stateful - if the inbound traffic on a port is allowed, the related outbound traffic is automatically allowed
 * Change in **security group** takes effect immediately
 * **Security groups** cannot blacklist an IP or port. Everything is blocked by default, we need to specifically open ports
-* **Elastic IP** gives a fixed IP to an EC2 instance across restarts
-* By default one AWS account can have 5 **elastic IP**
+* **Elastic IP** gives a fixed public IP to an EC2 instance across restarts
+* One AWS account can have 5 **elastic IP** (soft limit)
 * Prefer load balancer over **Elastic IP**
 * EC2 **User Data** script runs once (with root privileges) at the instance first start
 * EC2 Launch types - 
@@ -526,8 +528,9 @@
   * **Scheduled reserved instances** - reserved for specific time window
   * **Spot instances** - short workload, cheap, can lose instances, good for batch jobs, big data analytics etc.
   * **Dedicated instances** - no other customer will share the hardware, but instances from same AWS account can share hardware, no control on instance placement
-  * **Dedicated hosts** - the entire server is reserved, provides more control on instance placement, more visibility into sockets and cores, good for "bring your own licenses", complicated regulatory needs
+  * **Dedicated hosts** - the entire server is reserved, provides more control on instance placement, more visibility into sockets and cores, good for "bring your own licenses (BYOL)", complicated regulatory needs
 * **Billing** by second with a minimum of 60 seconds
+* **Spot Price** - If you terminate your instance, you pay for any partial hour used (as you do for On-Demand or Reserved Instances). However, you are not charged for any partial hour of usage if the Spot price goes above your maximum price and Amazon EC2 interrupts your Spot Instance
 * A custom **AMI** can be created with pre-installed software packages, security patches etc. instead of writing user data scripts, so that the boot time is less during autoscaling
 * **AMIs** are built for a specific region, but can be copied across regions
 * T2/T3 are **burstable** instances. Spikes are handled using burst credits that are accumulated over time. If burst credits are all consumed, performance will suffer
@@ -537,76 +540,100 @@
 * `http://169.254.169.254/latest/meta-data/public-ipv4/` gives **public IP**
 * `http://169.254.169.254/latest/meta-data/local-ipv4/` gives **local IP**
 * Two types of **placement groups**
-  * **Clustered Placement Group** - Grouping of instances within a single AZ. Recommended for applications that need low network latency and high network throughput. Only certain instances can be launched in this placement group. It cannot spac multiple AZ
-  * **Partition** – spreads your instances across logical partitions such that groups of instances in one partition do not share the underlying hardware with groups of instances in different partitions. This strategy is typically used by large distributed and replicated workloads, such as Hadoop, Cassandra, and Kafka
-  * **Spread Placement Group** - Instances are placed in distinct hardware. Recommended for applications that have a small number of critical instances that should be kept separate from each other. It can span multiple AZ
+  * **Clustered Placement Group** - 
+    * Grouping of instances within a single AZ
+    * Use cases - recommended for applications that need low network latency and high network throughput
+    * Only certain specific instance types can be launched in this placement group
+    * cannot span multiple AZ
+  * **Partition** – 
+    * spreads instances across logical partitions
+    * use cases - large distributed and replicated workloads, such as Hadoop, Cassandra, and Kafka
+    * each partition within a placement group has its own set of racks. Each rack has its own network and power source
+    * allows max 7 instances per AZ
+    * Partitions can be distributed across AZ
+    * Provides visibility as to which instance belongs to which partition
+    * not supported for Dedicated Hosts
+    * dedicated Instances can have a maximum of two partitions
+  * **Spread Placement Group** - 
+    * Instances are placed in distinct hardware
+    * each intance is placed on distinct racks, with each rack having its own network and power source
+    * use cases - recommended for applications that have a small number of critical instances that should be kept separate from each other
+    * can span multiple AZ
+    * allows max 7 instances per AZ
+    * not supported for Dedicated Instances or Dedicated Hosts
 * The instances within a **placement group** should be homogeneous
-* Existing instances can't be moved into a **placement group**
 * **Placement groups** can't be merged
-* AWS AMI Virtualization types - 
+* You can move an existing instance to a **placement group**, move an instance from one placement group to another, or remove an instance from a placement group. Before you begin, the instance must be in the stopped state
+* AWS **AMI Virtualization types** - 
   * Paravirtual (PV)
   * Hardware Virtual Machine (HVM) - Amazon recommends
-* Instance store backed EC2 instances can only be rebooted and terminated. They cannot be stopped unlike EBS-backed instances
-* EBS-backed instances once stopped, all data in any attached instance-stores will be deleted
-* EC2-Classic is the original version of EC2 where the elastic IP would get disassociated when the instance stopped
-* With EC2-VPC, the Elastic IP does not get disassociated when stopped
-* When EC2 instance is stopped, it may get moved to a different underlying host
-* EC2 instance states that are billed
+* **Instance store** backed EC2 instances can only be rebooted and terminated. They cannot be stopped unlike EBS-backed instances
+* With **instance store**, the entire image is downloaded from S3 before booting and hence the boot time is usually around 5 mins
+* **EBS-backed instances** once stopped, all data in any attached **instance store** will be deleted
+* With **EBS-backed instances**, only the part needed for booting is first downloaded from the EBS Snapshot and hence the boot time is shorter around 1 min
+* When an Amazon **EBS-backed instance** is stopped, you're not charged for instance usage; however, you're still charged for volume storage
+* **EC2-Classic** is the original version of EC2 where the elastic IP would get disassociated when the instance stopped
+* With **EC2-VPC**, the Elastic IP does not get disassociated when stopped
+* When EC2 instance is stopped, it may get moved to a **different underlying host**
+* EC2 **instance states that are billed**
   * running
   * stopping (The instannce is preparing to hibernate - NOT when the instance is being stopped)
   * terminated (for reserved instances only that are still in their contracted term)
-* AWS Systems Manager Parameter Store provides secure, hierarchical storage for configuration data management and secrets management. You can store data such as passwords, database strings, and license codes as parameter values. You can store values as plain text or encrypted data. You can then reference values by using the unique name that you specified when you created the parameter
-* Select Auto-assign Public IP option so that the launched EC2 instance has a public IP from Amazon's public IP pool
-* All AMIs are categorized as either backed by Amazon EBS or backed by instance store
-* To coordinate Availability Zones across accounts, you must use the AZ ID, which is a unique and consistent identifier for an Availability Zone
-* Using the console, you can change the DeleteOnTermination attribute when you launch an instance. To change this attribute for a running instance, you must use the command line
-* With instance store, the entire image is downloaded from S3 before booting and hence the boot time is usually around 5 mins
-* With EBS-backed instances, only the part needed for booting is first downloaded from the EBS Snapshot and hence the boot time is shorter around 1 min
-* When an Amazon EBS-backed instance is stopped, you're not charged for instance usage; however, you're still charged for volume storage
-* We charge you for each second, with a one-minute minimum, that you keep the instance running, even if the instance remains idle and you don't connect to it
-* AMIs with encrypted volumes cannot be made public. It can be shared with specific accounts along with the KMS CMK
-* During the AMI-creation process, Amazon EC2 creates snapshots of your instance's root volume and any other EBS volumes attached to your instance. You're charged for the snapshots until you deregister the AMI and delete the snapshots
-* If any volumes attached to the instance are encrypted, the new AMI only launches successfully on instances that support Amazon EBS encryption
-* Encrypting during the CopyImage action applies only to Amazon EBS-backed AMIs. Because an instance store-backed AMI does not rely on snapshots, you cannot use copying to change its encryption status
-* **Spot Price** - If you terminate your instance, you pay for any partial hour used (as you do for On-Demand or Reserved Instances). However, you are not charged for any partial hour of usage if the Spot price goes above your maximum price and Amazon EC2 interrupts your Spot Instance
+* Select **Auto-assign Public IP** option so that the launched EC2 instance has a public IP from Amazon's public IP pool
+* All **AMIs are categorized** as either 
+  * backed by Amazon EBS or 
+  * backed by instance store
+* **AMI**s with encrypted volumes cannot be made public. It can be shared with specific accounts along with the KMS CMK
+* During the **AMI**-creation process, Amazon EC2 creates snapshots of your instance's root volume and any other EBS volumes attached to your instance. You're charged for the snapshots until you deregister the AMI and delete the snapshots
+* If any volumes attached to the instance are encrypted, the new **AMI** only launches successfully on instances that support Amazon EBS encryption
+* Encrypting during the CopyImage action applies only to Amazon EBS-backed **AMI**s. Because an instance store-backed AMI does not rely on snapshots, you cannot use copying to change its encryption status
+* To coordinate Availability Zones across accounts, you must use the **AZ ID**, which is a unique and consistent identifier for an Availability Zone because us-east-1a AZ of one AWS account may not be same as us-east-1b of another AWS account
+* When an instance is terminated, Amazon Elastic Compute Cloud (Amazon EC2) uses the value of the **DeleteOnTermination** attribute for each attached EBS volume to determine whether to preserve or delete the volume when the instance is terminated
+* By default, the **DeleteOnTermination** attribute for the root volume of an instance is set to true, but it is set to false for all other volume types
+* Using the console, you can change the **DeleteOnTermination** attribute when you launch an instance. To change this attribute for a running instance, you must use the command line
 * **Hypervisors** - Xen, Nitro
-* You can move an existing instance to a placement group, move an instance from one placement group to another, or remove an instance from a placement group. Before you begin, the instance must be in the stopped state
-* We recommend using the same instance type for all instances in a cluster placement group
-* You must stop your Amazon EBS–backed instance before you can change its instance type
-* While changing instance type, instance store backed instances must be migrated to the new instance
+* You must stop your Amazon **EBS–backed instance** before you can change its instance type
+* While changing instance type, **instance store backed instances** must be migrated to the new instance
 * When you stop and start an instance, be aware of the following:
-  * We move the instance to new hardware; however, the instance ID does not change.
-  * If your instance has a public IPv4 address, we release the address and give it a new public IPv4 address. The instance retains its private IPv4 addresses, any Elastic IP addresses, and any IPv6 addresses
-  * If your instance is in an Auto Scaling group, the Amazon EC2 Auto Scaling service marks the stopped instance as unhealthy, and may terminate it and launch a replacement instance. To prevent this, you can suspend the scaling processes for the group while you're resizing your instance
-  * If your instance is in a cluster placement group and, after changing the instance type, the instance start fails, try the following: stop all the instances in the cluster placement group, change the instance type for the affected instance, and then restart all the instances in the cluster placement group
+  * We move the instance to **new hardware**; however, the instance ID does not change.
+  * If your instance has a public IPv4 address, we release the address and give it a **new public IPv4 address** 
+  * The instance retains its **private IPv4 addresses**, any **Elastic IP addresses**, and any **IPv6 addresses**
+  * If your instance is in an **Auto Scaling group**, the Amazon EC2 Auto Scaling service marks the stopped instance as unhealthy, and may terminate it and launch a replacement instance. To prevent this, you can suspend the scaling processes for the group while you're resizing your instance
+  * If your instance is in a **cluster placement group** and, after changing the instance type, the instance start fails, try the following: stop all the instances in the cluster placement group, change the instance type for the affected instance, and then restart all the instances in the cluster placement group
+* The **public IPv4 address** of an instance does not change on reboot
+* The VM is not returned to AWS on reboot
 * For Amazon EC2 Linux instances using the **cloud-init** service, when a new instance from a standard AWS AMI is launched, the public key of the Amazon EC2 key pair is appended to the initial operating system user’s ~/.ssh/authorized_keys file
 * For Amazon EC2 Windows instances using the **ec2config** service, when a new instance from a standard AWS AMI is launched, the ec2config service sets a new random Administrator password for the instance and encrypts it using the corresponding Amazon EC2 key pair’s public key
-* you can set up the operating system authentication mechanisms you want, which might include X.509 certificate authentication, Microsoft Active Directory, or local operating system accounts
-* The Termination Notice is accessible to code running on the instance via the instance’s metadata at http://169.254.169.254/latest/meta-data/spot/termination-time. This field will become available when the instance has been marked for termination (step 3, above), and will contain the time when a shutdown signal will be sent to the instance’s operating system. At that time, the Spot Instance Request’s bid status will be set to marked-for-termination. The bid status is accessible via the DescribeSpotInstanceRequests API for use by programs that manage Spot bids and instances
-* Amazon recommends that interested applications poll for the termination notice at five-second intervals. This will give the application almost two full minutes to complete any desired processing before it is reclaimed
-* If you get an InstanceLimitExceeded error when you try to launch a new instance or restart a stopped instance, you have reached the limit on the number of instances that you can launch in a region. You can request an instance limit increase on a per-region basis
-* If you get an InsufficientInstanceCapacity error when you try to launch an instance or restart a stopped instance, AWS does not currently have enough available On-Demand capacity to service your request. Wait a few minutes and then submit your request again; capacity can shift frequently
-* The following are a few reasons why an instance might immediately terminate:
+* You can set up the operating system authentication mechanism you want, which might include X.509 certificate authentication, Microsoft Active Directory, or local operating system accounts
+* For spot instance,
+  * The **Termination Notice** will be available 2 minutes before termination
+  * The **Termination Notice** is accessible to code running on the instance via the instance’s metadata at http://169.254.169.254/latest/meta-data/spot/termination-time
+  * The **spot/termination-time** metadata field will become available when the instance has been marked for termination
+  * The **spot/termination-time** metadata field will contain the time when a shutdown signal will be sent to the instance’s operating system
+  * The Spot Instance Request’s bid status will be set to marked-for-termination
+  * The bid status is accessible via the **DescribeSpotInstanceRequests** API for use by programs that manage Spot bids and instances
+* Amazon recommends that interested applications poll for the **termination notice** at five-second intervals
+* If you get an **InstanceLimitExceeded** error when you try to launch a new instance or restart a stopped instance, you have reached the limit on the number of instances that you can launch in a region. You can request an instance limit increase on a per-region basis
+* If you get an **InsufficientInstanceCapacity** error when you try to launch an instance or restart a stopped instance, it indicates AWS does not currently have enough available On-Demand capacity to service your request. Wait a few minutes and then submit your request again; capacity can shift frequently
+* The following are a few reasons why an instance might **immediately terminate**:
   * You've reached your EBS volume limit
   * An EBS snapshot is corrupt
   * The root EBS volume is encrypted and you do not have permissions to access the KMS key for decryption.
   * The instance store-backed AMI that you used to launch the instance is missing a required part (an image.part.xx file)
-* If the reason is Client.VolumeLimitExceeded: Volume limit exceeded, you have reached your EBS volume limit
-* If the reason is Client.InternalError: Client error on launch, that typically indicates that the root volume is encrypted and that you do not have permissions to access the KMS key for decryption
-* To change the instance type of EC2, the instance must be stopped
-* EC2 shutdown behavior (Behavior when shutdown signal is sent from inside the OS by running the shutdown command) -
+  * If the reason is **Client.VolumeLimitExceeded: Volume limit exceeded**, you have reached your EBS volume limit
+  * If the reason is **Client.InternalError: Client error on launch**, that typically indicates that the root volume is encrypted and that you do not have permissions to access the KMS key for decryption
+* EC2 **shutdown behavior** (Behavior when shutdown signal is sent from inside the OS by running the shutdown command) -
   * Stopped (Default) - The instance will be stopped on receiving the shutdown signal
   * Terminated - The instance will be terminated on receiving the shutdown signal
-* With shutdown protection turned on, the instnce cannot be terminated from the console until the shutdown protection is turned off
-* Even with shutdown protection on, if the instance has its shutdown behavior as terminated, the shutdown initiated from the OS will terminate the instance
-* Instance Type 
+* With **shutdown protection** turned on, the instnce cannot be terminated from the console until the shutdown protection is turned off
+* Even with **shutdown protection** on, if the instance has its shutdown behavior as terminated, the shutdown initiated from the OS will terminate the instance
+* **Instance Type** 
   * R - More RAM (use cases - in-memory caches)
   * C - More CPU (use cases - compute / databases)
   * M - Medium (use cases - general / webapp)
   * I - More I/O - instance storage (use cases - databases)
   * G - More GPU - (use cases - video rendering / machine learning)
   * T2/T3 - burstable instances (up to a capacity / unlimited)
-
 
 ## EFS
 
@@ -1307,7 +1334,7 @@
   * Configuration Compliance - lets you scan your managed instances for patch compliance and configuration inconsistencies
   * Inventory - collects information about your instances and the software installed on them, helping you to understand your system configurations and installed applications
   * State Manager - provides configuration management, which helps you maintain consistent configuration of your Amazon EC2 or on-premises instances. With Systems Manager, you can control configuration details such as server configurations, anti-virus definitions, firewall settings, and more. You can define configuration policies for your servers through the AWS Management Console or use existing scripts, PowerShell modules, or Ansible playbooks directly from GitHub or Amazon S3 buckets
-  * Parameter Store
+  * Parameter Store - provides secure, hierarchical storage for configuration data management and secrets management. You can store data such as passwords, database strings, and license codes as parameter values. You can store values as plain text or encrypted data. You can then reference values by using the unique name that you specified when you created the parameter
   * Distributor - enables you to securely store and distribute software packages in your organization
   * OpsCenter - provides a central location where operations engineers, IT professionals, and others can view, investigate, and resolve operational issues related to their environment
   * Maintenance Windows - lets you schedule windows of time to run administrative and maintenance tasks across your instances
