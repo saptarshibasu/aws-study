@@ -270,6 +270,7 @@
 * Supports at least 3,500 **requests per second** to add data and 5,500 requests per second to retrieve
 * **Server access logging** provides detailed records for the requests that are made to a bucket
 
+
 ## Glacier
 
 [TOC](#table-of-content)
@@ -305,6 +306,7 @@
   * Works with file format CSV, JSON, Parquet
   * Works with all 3 retrieval options - Expedited, Standard & Bulk
 * **Glacier** inventory (of available objects) is updated every 24 hours - no real time data
+
 
 ## CloudFront
 
@@ -349,6 +351,7 @@
 * An **invalidation request** path that includes the * wildcard counts as one path even if it causes CloudFront to invalidate thousands of files
 * CloudFront supports **Field Level Encryption**, so that the sensitive data can only be decrypted and viewed by a few specific components or services that have access to the private key
 * To use **Field Level Ecryption**, the specific fields and encryption public key need to be configured in CloudFront
+* CloudFront uses algorithm RSA/ECB/OAEPWithSHA-256AndMGF1Padding for **Field Level Encryption**
 * Use **signed URLs** for the following cases:
   * RTMP distribution. Signed cookies aren't supported for RTMP distributions
   * Restrict access to individual files, for example, an installation download for your application
@@ -364,47 +367,49 @@
 * **Price class** - collection fo edge locations for the purpose of controlling cost
 * Contents are served only from the edge locations of the selected **price class**
 * Default **price class** includes all edge locations including the expensive ones
-* If [**S3**](#s3) is used as an origin server, the bucket name should be in all lowercase and cannot contain space
-* For a given distribution, multiple origins can be configured including both S3 and HTTP servers (EC2 / external servers) 
-* If you have two origins and only the default cache behavior, the default cache behavior will cause CloudFront to get objects from one of the origins, but the other origin will never be used. Hence a separate cache behavior needs to be configured for each origin specifying which URL path will be routed to which origin
-* CloudFront does not consider query strings or cookies when evaluating the path pattern
-* CloudFront caches responses to GET and HEAD requests and, optionally, OPTIONS requests. CloudFront does not cache responses to requests that use the other methods
+* If **S3** is used as an origin server, the bucket name should be in all lowercase and cannot contain space
+* For a given distribution, **multiple origins** can be configured including both S3 and HTTP servers (EC2 / external servers) 
+* The default **cache behavior** will cause CloudFront to get objects from one of the origins only. Hence a separate cache behavior needs to be configured for each origin specifying which URL path will be routed to which origin
+* **Cache behavior** - CloudFront does not consider query strings or cookies when evaluating the path pattern
+* **Cache behavior** -- CloudFront caches responses to GET and HEAD requests and, optionally, OPTIONS requests. CloudFront does not cache responses to requests that use the other methods
 * GET, HEAD, OPTIONS, PUT, POST, PATCH, DELETE: You can use CloudFront to get, add, update, and delete objects, and to get object headers. In addition, you can perform other POST operations such as submitting data from a web form
-* Cache Based on Selected Request Headers
+* **Cache behavior** - Cache Based on Selected Request Headers
   * **None (improves caching)** – CloudFront doesn't cache your objects based on header values
   * **Whitelist** – CloudFront caches your objects based only on the values of the specified headers. Use Whitelist Headers to choose the headers that you want CloudFront to base caching on
-  * **All** – CloudFront doesn't cache the objects that are associated with this cache behavior. Instead, CloudFront sends every request to the origin (Not recommended for Amazon S3 origins)
-* CloudFront can cache different versions of your content based on the values of query string parameters. Options are:
+  * **All** – CloudFront doesn't cache the objects that are associated with this cache behavior
+* **Cache behavior** - CloudFront can cache different versions of your content based on the values of query string parameters. Options are:
   * **None (Improves Caching)** - origin returns the same version of an object regardless of the values of query string parameters
   * **Forward all, cache based on whitelist** - if your origin server returns different versions of your objects based on one or more query string parameters. Then specify the parameters that you want CloudFront to use as a basis for caching
   * **Forward all, cache based on all** - if your origin server returns different versions of your objects for all query string parameters
-* Supports specifying custom error page based on HTTP response code
+* Supports specifying **custom error page** based on HTTP response code
 * Supports websocket
-* You cannot invalidate objects that are served by an RTMP distribution
-* Using CloudFront can be more cost effective if your users access your objects frequently because, at higher usage, the price for CloudFront data transfer is lower than the price for Amazon S3 data transfer
-* If distribution is configured to compress files, CloudFront determines whether the file is compressible:
-  * The file must be of a type that CloudFront compresses.
-  * The file size must be between 1,000 and 10,000,000 bytes.
-  * The response must include a Content-Length header so CloudFront can determine whether the size of the file is in the range that CloudFront compresses. If the Content-Length header is missing, CloudFront won't compress the file
-  * The response must not include a Content-Encoding header
-  * If you configure CloudFront to compress content, CloudFront removes the ETag response header from the files that it compresses. When the ETag header is present, CloudFront and your origin can use it to determine whether the version of a file in a CloudFront edge cache is identical to the version on the origin server. However, after compression the two versions are no longer identical. As a result, when a compressed file expires and CloudFront forwards another request to your origin, your origin always returns the file to CloudFront instead of an HTTP status code 304 (Not Modified)
-* CloudFront compresses files in each edge location when it gets the files from your origin. When you configure CloudFront to compress your content, it doesn't compress files that are already in edge locations. In addition, when a file expires in an edge location and CloudFront forwards another request for the file to your origin, CloudFront doesn't compress the file if your origin returns an HTTP status code 304, which means that the edge location already has the latest version of the file. If you want CloudFront to compress the files that are already in edge locations, you'll need to invalidate those files
-* CloudFront does not compress a file if the response includes a Content-Encoding header, regardless of the value
-* You might not find the imported certificate or ACM certificate if - (Note - IAM certificate store supports ECDSA):
-  * The certificate imported into ACM is using an algorithm other that 1024-bit RSA or 2048-bit RSA.
-  * The ACM certificate wasn't requested in the same AWS Region as your load balancer or CloudFront distribution
-* To require that users access content through CloudFront, change the following settings in your CloudFront distributions:
-  * Origin Custom Headers - Configure CloudFront to forward custom headers to your origin (headers should be rotated periodically)
-  * Viewer Protocol Policy - Configure your distribution to require viewers to use HTTPS to access CloudFront 
-  * Origin Protocol Policy - Configure your distribution to require CloudFront to use the same protocol as viewers to forward requests to the origin (Headers will remain encrypted)
-* To create signed cookies or signed URLs
-  * identify an AWS account as a trusted signer
-  * create a CloudFront key pair for the trusted signer
+* You cannot invalidate objects that are served by an **RTMP distribution**
+* Using CloudFront can be more cost effective if your users access your objects frequently because, at higher usage, the price for CloudFront data transfer is lower than the price for Amazon S3 **data transfer**
+* If distribution is configured to **compress** files, CloudFront determines whether the file is compressible:
+  * The **file type** must be one that CloudFront compresses
+  * The **file size** must be between 1,000 and 10,000,000 bytes
+  * The response must include a **Content-Length** header so CloudFront can determine whether the size of the file is in the range that CloudFront compresses
+  * The response must not include a **Content-Encoding** header
+  * If you configure CloudFront to compress content, CloudFront removes the **ETag** response header from the files that it compresses
+* ETag header helps to determine whether the edge cache has the latest file. However, after compression the two versions are no longer identical. As a result, when a compressed file expires and CloudFront forwards another request to your origin, the origin always returns the file to CloudFront instead of an HTTP status code 304 (Not Modified)
+* When configured for compression, CloudFront **compresses** files in each edge location. it doesn't compress files when
+  * the file is already in edge locations
+  * the file is expired but origin returns HTTP status code 304
+* You might not find the **imported certificate** or **ACM certificate** if - (Note - IAM certificate store supports ECDSA):
+  * The imported certificate is using an algorithm other than 1024-bit RSA or 2048-bit RSA.
+  * The ACM certificate wasn't requested in the same AWS Region as the load balancer or CloudFront distribution
+* To ensure that users can access content only through CloudFront, change the following settings in the CloudFront distributions:
+  * **Origin Custom Headers** - Configure CloudFront to forward custom headers to your origin (headers should be rotated periodically). Origin server to deny requests not containing correct header
+  * **Viewer Protocol Policy** - Configure your distribution to require viewers to use HTTPS to access CloudFront 
+  * **Origin Protocol Policy** - Configure your distribution to require CloudFront to use the same protocol as viewers to forward requests to the origin (This ensures the headers will remain encrypted)
+* To create **signed cookies** or **signed URLs**
+  * identify an AWS account as a **trusted signer**
+  * create a CloudFront **key pair** for the trusted signer
   * assign the trusted signer to the distribution or a specific cache behvior
-* Web didtributions can add a trusted signer to a specific cache behavior and thus using signed cookie or signed URL for a specific set of files only. However, for RTMP distributions, it has to be for the entire distribution
-* For signed URLs CloudFront checks if the URL has expired only at the begining of the download or play. If after the download or streaming starts the URL expires, the download or streaming will continue
-* Geo restriction applies to an entire web distribution. If you need to apply one restriction to part of your content and a different restriction (or no restriction) to another part of your content, you must either create separate CloudFront web distributions or use a third-party geolocation service
-* CloudFront uses algorithm RSA/ECB/OAEPWithSHA-256AndMGF1Padding for field level encryption
+* Web didtributions can add a trusted signer to a specific cache behavior and thus using **signed cookie** or **signed URL** for a specific set of files only. However, for RTMP distributions, it has to be for the entire distribution
+* For **signed URLs** CloudFront checks if the URL has expired only at the begining of the download or play. If after the download or streaming starts the URL expires, the download or streaming will continue
+* **Geo restriction** applies to an entire web distribution. If you need to apply one restriction to part of your content and a different restriction (or no restriction) to another part of your content, you must either create separate CloudFront web distributions or use a third-party geolocation service
+
 
 ## Snowball
 
@@ -418,12 +423,14 @@
 * An 80 TB Snowball appliance has 72 TB **usable capacity**
 * 100 TB Snowball Edge appliance has 83 TB of **usable capacity**
 
+
 ## Snowmobile
 
 [TOC](#table-of-content)
 
 * 100 PB in **capacity**
 * **When to use** - Better than snowball if data to be transferred is more than 10 PB
+
 
 ## Storage Gateway
 
@@ -450,15 +457,17 @@
   * VTS - Virtual Tape Shelf - Glacier
 * By default, Storage Gateway uses Amazon S3-Managed Encryption Keys (SSE-S3) to server-side encrypt all data it stores in Amazon S3
 
+
 ## Athena
 
 [TOC](#table-of-content)
 
-* **Serverless** service
+* **Serverless** service (built on Presto)
 * Allows to do analytics directly on **S3**
-* Supports **data formats** CSV, JSON, ORC, Avro, Parquet (built on Presto)
+* Supports **data formats** CSV, JSON, ORC, Avro, Parquet
 * Uses **SQL** to query the files
 * **Good for** analyzing VPC Flow Logs, ELB Logs etc.
+
 
 ## IAM
 
@@ -489,6 +498,7 @@
 * If you want CloudFront to cache different versions of your objects based on the protocol of the request, HTTP or HTTPS, configure CloudFront to forward the CloudFront-Forwarded-Proto header to your origin
 * If your origin supports Brotli compression, you can whitelist the Accept-Encoding header and cache based on the header. You should configure caching based on Accept-Encoding only if your origin serves different content based on the header
 * Caching based on query parameters and cookies are also possible with the similar options. It is recommended to forward only those cookies or query parameters to the origin server for which the server returns different objects. This will reduce the load on the server and let CloudFront serve requests from the edge location cache
+
 
 ## EC2
 
@@ -597,6 +607,7 @@
   * G - More GPU - (use cases - video rendering / machine learning)
   * T2/T3 - burstable instances (up to a capacity / unlimited)
 
+
 ## EFS
 
 [TOC](#table-of-content)
@@ -608,6 +619,7 @@
 * To use EFS
   * install **amazon-efs-utils**
   * **mount** the EFS at the appropriate location
+
 
 ## ELB
 
@@ -637,6 +649,7 @@
 * Elastic Load Balancing captures the logs and stores them in the Amazon S3 bucket that you specify as compressed files
 * Each access log file is automatically encrypted before it is stored in your S3 bucket and decrypted when you access it
 * After you add an Availability Zone to the ELB, the load balancer starts routing requests to the registered instances in that Availability Zone. Note that you can modify the Availability Zones for your load balancer at any time
+
 
 ## Auto Scaling
 
@@ -673,6 +686,7 @@
   * capacity-optimized - The capacity-optimized strategy automatically launches Spot Instances into the most available pools by looking at real-time capacity data and predicting which are the most available. By offering the possibility of fewer interruptions, the capacity-optimized strategy can lower the overall cost of your workload
   * lowest-price - Amazon EC2 Auto Scaling allocates your instances from the number (N) of Spot Instance pools that you specify and from the pools with the lowest price per unit at the time of fulfillment
 * An Auto Scaling group is associated with one launch configuration at a time, and you can't modify a launch configuration after you've created it. To change the launch configuration for an Auto Scaling group, use an existing launch configuration as the basis for a new launch configuration. Then, update the Auto Scaling group to use the new launch configuration. After you change the launch configuration for an Auto Scaling group, any new instances are launched using the new configuration options, but existing instances are not affected
+
 
 ## EBS
 
@@ -760,6 +774,7 @@
 * Note that you can't delete a snapshot of the root device of an EBS volume used by a registered AMI. You must first deregister the AMI before you can delete the snapshot
 * To take a consistent snapshot, unmount the volume, initiate the snapshot and mount it back (The ongoing reads and writes do not affect the snapshot once it is started)
 
+
 ## CloudWatch
 
 [TOC](#table-of-content)
@@ -800,6 +815,7 @@
 * By default, CloudTrail log files are encrypted using S3 Server Side Encryption (SSE) and placed into your S3 bucket
 * CloudTrail integration with CloudWatch logs enables you to receive SNS notifications of account activity captured by CloudTrail. For example, you can create CloudWatch alarms to monitor API calls that create, modify and delete Security Groups and Network ACL’s
 
+
 ## CloudFormation
 
 [TOC](#table-of-content)
@@ -810,6 +826,7 @@
   * An optional list of data tables used to lookup static configuration values (e.g., AMI names)
   * The list of AWS resources and their configuration values
   * A template file format version number
+
 
 ## Route 53
 
@@ -833,6 +850,7 @@
 * **Geolocation Based Routing** - A separate A record for each IP. Each A record is mapped to a location and the routing happens to a specific server depending on which location the DNS query originated. Good for scenarios where different website will have different language laels based on location
 * **Multivalue Answer** - Simple routing with health checks of each IP
 * **Geoproximity** - Must use Route 53 Traffic Flow. Routes traffic based on geographic location of users and resources. This can be further influenced with biases
+
 
 ## RDS
 
@@ -873,6 +891,7 @@
 * We cannot access the RDS **virtual machines**. Patching the RDS operating system is Amazon's responsibility
 * **Enhanced Monitoring** metrics are useful when it is required to see how different processes or threads on a DB instance use the CPU
 
+
 ## DynamoDB
 
 [TOC](#table-of-content)
@@ -883,6 +902,7 @@
 * Supports both **Eventual Consistant** Reads (Default) & **Strongly Consistant** Reads
 * **Serverless** service
 * Amazon DynamoDB Accelerator (DAX) is a fully managed, highly available, in-memory cache that can reduce Amazon DynamoDB response times from milliseconds to microseconds
+
 
 ## Redshift
 
@@ -904,6 +924,7 @@
   * User log — logs information about changes to database user definitions
   * User activity log — logs each query before it is run on the database
 * work load management
+
 
 ## Aurora
 
@@ -931,6 +952,7 @@
 * The amount of replication is independent of the number of DB instances in your cluster
 * The Aurora shared storage architecture makes your data independent from the DB instances in the cluster. For example, you can add a DB instance quickly because Aurora doesn't make a new copy of the table data. Instead, the DB instance connects to the shared volume that already contains all your data
 
+
 ## ElastiCache
 
 [TOC](#table-of-content)
@@ -946,7 +968,8 @@
 * Caching patterns - 
   * Write through
   * Lazy loading
-  
+
+
 ## VPC
 
 [TOC](#table-of-content)
@@ -1089,6 +1112,7 @@
 * Traffic between EC2 instances in different AWS Regions stays within the AWS network, if there is an Inter-Region VPC Peering connection between the VPCs where the two instances reside
 * You may use a third-party software VPN to create a site to site or remote access VPN connection with your VPC via the Internet gateway
 
+
 ## SQS
 
 [TOC](#table-of-content)
@@ -1110,6 +1134,7 @@
 * It's a way to **decouple** infrastructure
 * After consuming the message the client app must call SQS API to delete the message
 
+
 ## SWF
 
 [TOC](#table-of-content)
@@ -1125,6 +1150,7 @@
   * Activity Workers
   * SWF is a fully-managed state tracker and task coordinator service. It does not provide serverless orchestration to multiple AWS resources. AWS Step Functions provides serverless orchestration for modern applications
 
+
 ## SNS
 
 [TOC](#table-of-content)
@@ -1135,6 +1161,7 @@
 * Stored redundantly across **multiple AZ**
 * Supports multiple topics
 
+
 ## API Gateway
 
 [TOC](#table-of-content)
@@ -1144,6 +1171,7 @@
 * Allows logging result to **CloudWatch**
 * Allow **throttling** to prevent attacks
 * **CORS** is enforced by client's browser
+
 
 ## Kinesis
 
@@ -1163,6 +1191,7 @@
 * Kinesis Streams have shards
 * Kinesis Firehose doesn't have a persistent store. As soon as the data comes in, the data needs to be processed optionally using Lambda functions and send it to the appropriate data stores
 
+
 ## Cognito
 
 [TOC](#table-of-content)
@@ -1174,12 +1203,14 @@
 * Active Directory - SAML Federation
 * If the corporate identity store is not compatible with SAML 2.0, then we can build a custom identity broker application to perform a similar function. The broker application authenticates users, requests temporary credentials for users from Amazon STS, and then provides them to the user to access AWS resources.
 
+
 ## OpsWorks
 
 [TOC](#table-of-content)
 
 * Managed **configuration management** system
 * Provides managed instancess of **Chef** and **Puppet**
+
 
 ## CodeDeploy
 
@@ -1210,6 +1241,7 @@
 * Corporate Active Directory can be integrated with AWS using AWS Directory Service AD Connector
 * IAM Role can be assigned to the users or groups from the coprorate Active Directory once it is integrated with the VPC via the AWS Directory Service AD Connector
 
+
 ## Shield
 
 [TOC](#table-of-content)
@@ -1217,6 +1249,7 @@
 * All AWS customers benefit from the automatic protections of **AWS Shield Standard**, at no additional charge
 * **AWS Shield Standard** with Amazon CloudFront and Amazon Route 53 provides comprehensive availability protection against all known infrastructure (Layer 3 and 4) attacks like SYN/UDP floods, reflection attacks, and others to support high availability of your applications on AWS
 * **AWS Shield Advanced** provides additional detection and mitigation against large and sophisticated DDoS attacks
+
 
 ## WAF
 
@@ -1228,11 +1261,13 @@
 * The custmers can create rules to filter web traffic based on conditions that include IP addresses, HTTP headers and body, or custom URIs
 * WAF can be used with both ALB & CloudFront
 
+
 ## Macie
 
 [TOC](#table-of-content)
 
 * Amazon Macie recognizes sensitive data such as personally identifiable information (PII) or intellectual property, and provides us with dashboards and alerts that give visibility into how this data is being accessed or moved
+
 
 ## Inspector
 
@@ -1241,6 +1276,7 @@
 * Amazon Inspector automatically assesses applications for vulnerabilities or deviations from best practices and produces a detailed list of security findings prioritized by level of severity
 * Amazon Inspector includes a knowledge base of hundreds of rules mapped to common security best practices and vulnerability definitions such as remote root login being enabled, or vulnerable software versions installed
 
+
 ## Lambda
 
 [TOC](#table-of-content)
@@ -1248,12 +1284,14 @@
 * Lamda provides CloudWatch metrics for Invocations and Errors
 * Lambda@Edge function can intercept the request and response at the CloudFront edge locations and modify the request and responses. Possible use cases include URL rewriting, modifying requests based on the client user-agent etc.
 
+
 ## Config
 
 [TOC](#table-of-content)
 
 * AWS Config is a fully managed service that provides you with an AWS resource inventory, configuration history, and configuration change notifications to enable security and governance
 * If configurations do not match the configured compliance rules, it can trigger notifications
+
 
 ## Systems Manager
 
@@ -1274,11 +1312,13 @@
   * OpsCenter - provides a central location where operations engineers, IT professionals, and others can view, investigate, and resolve operational issues related to their environment
   * Maintenance Windows - lets you schedule windows of time to run administrative and maintenance tasks across your instances
 
+
 ## Resource Access Manager
 
 [TOC](#table-of-content)
 
 * AWS Resource Access Manager (AWS RAM) enables you to share your resources with any AWS account or organization in AWS Organizations. Customers who operate multiple accounts can create resources centrally and use AWS RAM to share them with all of their accounts to reduce operational overhead. AWS RAM is available at no additional charge
+
 
 ## Secrets Manager
 
@@ -1294,11 +1334,13 @@
 * Secrets Manager is more expensive than AWS Systems Manager
 * Parameter Store is now integrated with Secrets Manager so that you can retrieve Secrets Manager secrets when using other AWS services that already support references to Parameter Store parameters
 
+
 ## Organizations
 
 [TOC](#table-of-content)
 
 * AWS Organizations is an account management service that lets you consolidate multiple AWS accounts into an organization that you create and centrally manage. With AWS Organizations, you can create member accounts and invite existing accounts to join your organization. You can organize those accounts into groups and attach policy-based controls
+
 
 ## CloudHSM
 
@@ -1310,8 +1352,8 @@
 * Dedicated hardware - not shared with other AWS customers. It may be useful to meet certain compliance requirements
 * Your KMS customer master keys (CMKs) never leave the CloudHSM instances, and all KMS operations that use those keys are only performed in your HSMs
 * CloudHSM currently uses Luna SA HSMs from SafeNet
-* You can implement CloudHSMs in multiple Availability Zones with replication between them to provide for high availability and storage resilience
-* 
+* You can implement CloudHSMs in multiple Availability Zones with replication between them to provide for high availability and storage resilience 
+
 
 ## KMS
 
@@ -1333,11 +1375,13 @@
 * Encryption Algorithm - AES with 256 bit key in GCM mode
 * Generates a unique data key. This operation returns a plaintext copy of the data key and a copy that is encrypted under a customer master key (CMK) that you specify. You can use the plaintext key to encrypt your data outside of KMS and store the encrypted data key with the encrypted data
 
+
 ## Firewall Manager
 
 [TOC](#table-of-content)
 
 * AWS Firewall Manager simplifies your AWS WAF administration and maintenance tasks across multiple accounts and resources. With AWS Firewall Manager, you set up your firewall rules just once. The service automatically applies your rules across your accounts and resources, even as you add new resources
+
 
 ## GuardDuty
 
@@ -1345,11 +1389,13 @@
 
 * Amazon GuardDuty is a continuous security monitoring service that analyzes and processes the following data sources: VPC Flow Logs, AWS CloudTrail event logs, and DNS logs. It uses threat intelligence feeds, such as lists of malicious IPs and domains, and machine learning to identify unexpected and potentially unauthorized and malicious activity within your AWS environment. This can include issues like escalations of privileges, uses of exposed credentials, or communication with malicious IPs, URLs, or domains. For example, GuardDuty can detect compromised EC2 instances serving malware or mining bitcoin. It also monitors AWS account access behavior for signs of compromise, such as unauthorized infrastructure deployments, like instances deployed in a region that has never been used, or unusual API calls, like a password policy change to reduce password strength
 
+
 ## Single Sign-On
 
 [TOC](#table-of-content)
 
 * AWS SSO is an AWS service that enables you to use your existing credentials from your Microsoft Active Directory to access your cloud-based applications, such as AWS accounts and business applications (Office 365, Salesforce, Box), by using single sign-on (SSO)
+
 
 ## Trusted Advisor
 
@@ -1363,12 +1409,14 @@
   * Fault Tolerance
   * Service Limits
 
+
 ## Budgets
 
 [TOC](#table-of-content)
 
 * AWS Budgets gives you the ability to set custom budgets that alert you when your costs or usage exceed (or are forecasted to exceed) your budgeted amount
 * You can also use AWS Budgets to set reservation utilization or coverage targets and receive alerts when your utilization drops below the threshold you define
+
 
 ## Backup
 
@@ -1379,6 +1427,7 @@
 * Amazon Data Lifecycle Management (DLM) policies and backup plans created in AWS Backup work independently from each other and provide two ways to manage EBS snapshots. DLM provides a simple way to manage the lifecycle of EBS resources, such as volume snapshots. You should use DLM when you want to automate the creation, retention, and deletion of EBS snapshots. You should use AWS Backup to manage and monitor backups across the AWS services you use, including EBS volumes, from a single place
 
 * Amazon EFS backup functionality is built on AWS Backup
+
 
 ## Scenario Question Tips
 
@@ -1432,6 +1481,7 @@ KMS Custom Key Store | CloudHSM
 Single tenant key access | CloudHSM
 Services encrypted by default | Glacier, Storage Gateway, CloudTrail
 
+
 ## Serverless Services
 
 [TOC](#table-of-content)
@@ -1459,6 +1509,7 @@ Services encrypted by default | Glacier, Storage Gateway, CloudTrail
   * Amazon Kinesis
   * Amazon Athena
   * Glue
+
 
 ## Common Architecture
 
