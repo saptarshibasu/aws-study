@@ -275,37 +275,37 @@
 
 [TOC](#table-of-content)
 
-* **Glacier** - Retrieval Policy
+* **Retrieval Policy**
   * Expedited (1 - 5 mins retrieval)
   * Standard (3 - 5 hours)
   * Bulk (5 - 12 hours)
-* **Glacier** - object (in S3) == archive (in Glacier)
-* **Glacier** - bucket == vault
-* **Glacier** archive files can be upto 40 TB (note more than S3)
-* **Glacier** - Each vault has ONE vault policy & ONE lock policy
+* Object (in S3) == **archive** (in Glacier)
+* Bucket (in S3) == **vault** (in Glacier)
+* Archive files can be upto 40 TB (note more than S3)
+* Each vault has ONE vault policy & ONE lock policy
   * **Vault Policy** - similar to S3 bucket policy - restricts user access
   * **Lock Policy** - immutable - once set cannot be changed
     * WORM Policy - write once read many
     * Forbid deleting an archive if it is less than 1 year (configurable) = regulatory compliance
     * Nultifactor authentication on file access
-* Files retrieved from **Glacier** will be stored in Reduced Redundancy Storage class for a specified number of days
-* For faster retrieval from **Glacier** based on Retrieval Policy, Capacity Units may need to be purchased
-* Amazon S3 **Glacier** automatically encrypts data at rest using Advanced Encryption Standard (AES) 256-bit symmetric keys
-* **Glacier** range retrieval (byte range) is charged as per the volume of data retrieved
-* In a single **Glacier** upload, an archive of maximum 4GB (note 1GB less than S3) size can be uploaded
-* Any **Glacier** upload above 100 MB  should use multipart upload (note same as S3)
-* A **Glacier** vault can be deleted only when all its content archives are deleted
-* **Glacier** allows the user or application to be notified through SNS when the requested data becomes available
-* Bucket access policy (for S3) or Vault access policy (for Glacier) are resource based policies (directly attached to a particular resource - vault/bucket in this case), whereas IAM policies are user based policies
-* One Vault access policy can be attached to each Vault
-* One **Glacier** retrieval policy per region
+* Files retrieved from Glacier will be stored in **Reduced Redundancy Storage** class for a specified number of days
+* For faster retrieval from Glacier based on Retrieval Policy, **Capacity Units** may need to be purchased
+* Amazon S3 Glacier **automatically encrypts** data at rest using Advanced Encryption Standard (AES) 256-bit symmetric keys
+* Glacier **range retrieval** (byte range) is charged as per the volume of data retrieved
+* In a **single Glacier upload**, an archive of maximum 4GB (note 1GB less than S3) size can be uploaded
+* Any Glacier upload above 100 MB  should use **multipart upload** (note same as S3)
+* A Glacier **vault** can be deleted only when all its content archives are deleted
+* Glacier allows the user or application to be notified through **SNS** when the requested data becomes available
+* Bucket access policy (for S3) or **Vault access policy (for Glacier)** are resource based policies (directly attached to a particular resource - vault/bucket in this case), whereas IAM policies are user based policies
+* One **Vault access policy** can be attached to each Vault
+* One **Glacier retrieval policy** per region
 * **S3 Glacier Select** - 
   * Allows to select a subset of rows and colums using SQL without retrieving the entire file
   * Joins and subqueries not allowed
   * Files can be compressed with GZIP or BZIP2
   * Works with file format CSV, JSON, Parquet
   * Works with all 3 retrieval options - Expedited, Standard & Bulk
-* **Glacier** inventory (of available objects) is updated every 24 hours - no real time data
+* Glacier **inventory** (of available objects) is updated every 24 hours - no real time data
 
 
 ## CloudFront
