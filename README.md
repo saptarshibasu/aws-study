@@ -1,5 +1,95 @@
 # AWS Cheat Sheet
 
+## Table of Content
+
+### Storage
+
+[Amazon S3](#s3)
+[Amazon S3 Glacier](#glacier)
+[Amazon EBS](#ebs)
+[Amazon EFS](#efs)
+[AWS Storage Gateway](#storage-gateway)
+[AWS Snowball](#snowball)
+[AWS Snowmobile](#snowmobile)
+[AWS Backup](#backup)
+
+### Compute
+
+[Amazon EC2](#ec2)
+[AWS Lambda](#lambda)
+
+### Networking & Content Delivery
+
+[Amazon CloudFront](#cloudfront)
+[Elastic Load Balancing](#elb)
+[Amazon Route 53](#route-53)
+[Amazon VPC](#vpc)
+[Amazon API Gateway](#api-gateway)
+
+### Database
+
+[Amazon RDS](#rds)
+[Amazon DynamoDB](#dynamodb)
+[Amazon Redshift](#redshift)
+[Amazon Aurora](#aurora)
+[Amazon ElastiCache](#elasticache)
+
+### Application Integration
+
+[Amazon SQS](#sqs)
+[Amazon SWF](#swf)
+[Amazon SNS](#sns)
+
+### Security, Identity & Compliance
+
+[AWS Identity & Access Management (AWS IAM)](#iam)
+[AWS Shield](#shield)
+[AWS WAF](#waf)
+[Amazon Macie](#macie)
+[Amazon Inspector](#inspector)
+[AWS Resource Access Manager (AWS RAM)](#resource-access-manager)
+[Amazon Cognito](#cognito)
+[AWS Secrets Manager](#secrets-manager)
+[AWS Single Sign-on](#single-sign-on)
+[AWS Firewall Manager](#firewall-manager)
+[Amazon GuardDuty](#guardduty)
+[AWS Directory Service](#directory-service)
+
+### Cryptography & PKI
+
+[AWS CloudHSM](#cloudhsm)
+[AWS Ket Management Service (AWS KMS)](#kms)
+
+### Management & Governance
+
+[AWS Auto Scaling](#auto-scaling)
+[Amazon CloudWatch](#cloudwatch)
+[AWS CloudTrail](#cloudtrail)
+[AWS CloudFormation](#cloudformation)
+[AWS OpsWorks](#opsworks)
+[AWS Organizations](#organizations)
+[AWS Config](#config)
+[AWS Systems Manager](#systems-manager)
+[AWS Trusted Advisor](#trusted-advisor)
+[AWS Budgets](#budgets)
+
+### Analytics
+
+[Amazon Athena](#ahena)
+[Amazon Kinesis](#kinesis)
+
+### Developer Tools
+
+[AWS CodeDeploy](#codedeploy)
+
+### Others
+
+[Scenario Question Tips](#scenario-question-tips)
+[Serverless Services](#serverless-services)
+[Common Architecture](#common-architecture)
+
+---
+
 ## S3
 
 * **Object** based storage (files)
@@ -8,19 +98,25 @@
 * Bucket name has to be **unique** across all regions
 * **Read after write** consistency for PUTs of new objects
 * **Eventual** consistency for overwrite PUTs and DELETEs
-* **Designed for** 99.99% availability for S3 Standard, 99.9% for S3 - IA & 99.5% for S3 One Zone - IA
-* Amazon **guarantees availability** - 99.9% for S3 Standard, 99% for S3 - IA & S3 One Zone - IA
+* **Designed for** -
+  * 99.99% availability for S3 Standard, 
+  * 99.9% for S3 - IA & 
+  * 99.5% for S3 One Zone - IA
+* Amazon **guarantees availability** -
+  * 99.9% for S3 Standard
+  * 99% for S3 - IA 
+  * S3 One Zone - IA
 * Amazon **guarantees durability** of 99.999999999% (11 * 9's) for all storage classes
 * **Replicated** to >= 3 AZ (except S3 One Zone IA)
 * **S3 Standard** - Frequently accessed
 * **S3 Infrequently Accessed (IA)** - Provides rapid access when needed
 * **S3 Infrequently Accessed (IA)** - Less storage cost but has data retrieval cost
 * **S3 One Zone IA** - Data is stored in a single AZ + Retrieval charge
-* **S3 Intelligent Tiering** - ML based - moves object to different storage classes based on its learning about usage of the object
-* **S3 Glacier** - Archive + Retrival time configurable from minutes to hours + Retrieval charge (Separate service integrated with S3)
+* **S3 Intelligent Tiering** - ML based - moves objects to different storage classes based on its learning about usage of the objects
+* **S3 Glacier** - Archive + Retrieval time configurable from minutes to hours + Retrieval charge (Separate service integrated with S3)
 * **S3 Glacier Deep Archive** - Retrieval time of 12 hrs + Retrieval charge
 * **S3 Reduced Redundacy** - Deprecated. Sustains loss of data in a single facility
-* Minimum storage period
+* **Minimum storage period**
   * Intelligent Tiering - 30 days
   * Standard IA - 30 days
   * One Zone IA - 30 days
@@ -36,13 +132,13 @@
 * **Cross Region Replication** for High Availability or Disaster Recovery
 * **Cross Region Replication** requires versioning to be enabled in both source and destination
 * **Cross Region Replication** is not going to replicate
-  * file versions created before enabling cross region replication
-  * delete marker
-  * version deletions
+  * File versions created before enabling cross region replication
+  * Delete marker
+  * Version deletions
 * **Cross Region Replication** is asynchronous
 * **Cross Region Replication** can replicate to buckets in different account
 * **Transfer Acceleration** for reduced upload time
-* **Transfer Acceleration** takes advantage of Cloudfront's globally distributed edge locations and then routes data to the S3 bucket through Amazon's internal backbone network
+* **Transfer Acceleration** takes advantage of CloudFront's globally distributed edge locations and then routes data to the S3 bucket through Amazon's internal backbone network
 * The **bucket access logs** can be stored in another bucket which must be owned by the same AWS account in the same region
 * Enabling **logging** on a bucket from the management console also updates the ACL on the target bucket to grant write permission to the Log Delivery group
 * **Encryption at Rest** - 
@@ -53,7 +149,7 @@
 * **SSE-S3**
   * Server side encryption
   * Key managed by S3
-  * AES 256
+  * AES 256 in GCM mode
   * Must set header - **`"x-amz-server-side-encryption":"AES256"`**
 * **SSE-KMS**
   * Server side encryption
@@ -71,6 +167,10 @@
   * Clients encrypt / decrypt data
 * When **encryption** is enabled on an existing file, a new version will be created (provided versioning is enabled)
 * Prefer default **encryption** settings over S3 bucket policies to encrypt objects at rest
+* There can be at most 10 tags associated with an object
+* S3 **Bucket Policy** can be used to enforce upload of only encrypted objects. The policy will deny any PUT request that does not have the appropriate header `x-amz-server-side-encryption`
+* S3 **Bucket Policy** can be used to provide public read access to all files in the bucket instead of providing public access to each individual file
+* S3 evaluates and applies **bucket policies** before applying bucket encryption settings. Even if bucket encryption settings is enabled, PUT requests without encryption information will be rejected if there are bucket policies to reject such PUT requests
 * With **SSE-KMS** enabled, the KMS limits might need to be increased to avoid throttling of a lot of small uploads
 * **Versioning**, once enabled, cannot be disabled. It can only be suspended
 * **Versioning** is enabled at the bucket level
@@ -88,34 +188,43 @@
 * **Multipart upload** advantages -
   * Retry is faster
   * Run in parallel to improve performance and utilize network bandwidth
-* There can be at most 10 tags
-* S3 **Bucket Policy** can be used to enforce upload of only encrypted objects. The policy will deny any PUT request that does not have the appropriate header
-* S3 **Bucket Policy** can be used to provide public read access to all files in the bucket instead of providing public access to each individual file
-* S3 evaluates and applies **bucket policies** before applying bucket encryption settings. Even if bucket encryption settings is enabled, PUT requests without encryption information will be rejected if there are bucket policies to reject such PUT requests
 * S3 static website URL: `<bucket-name>.s3-website-<aws-region>.amazonaws.com` or `<bucket-name>.s3-website.<aws-region>.amazonaws.com`
 * **Pre-signed URL** allows users to get temporary access to buckets and objects
 * **S3 Inventory** allows producing reports about S3 objects daily or weekly in a different S3 bucket
-* **S3 Inventory** reports format can be specified and the data can be queried using Athena
+* **S3 Inventory** reports format can be specified and the data can be queried using [Athena](#athena)
 * **Storage class** needs to be specified during object upload
 * **S3 Analytics**, when enabled, generates reports in a different S3 bucket to give insights about the object usage and this can be used to recommend when the object should be moved from one storage class to another
+* Earlier S3 **performance** would start degrading with 100 TPS
+* Historically the recommended approach is to have **random 4 characters** in front of the key name for better distribution of objects across partitions
+* To host a **static website**, the S3 bucket must have the same name as the domain or subdomain
+* S3 **notification** feature enables the user to receive notifications when certain events happen in a bucket. S3 supports following destinations
+  * Amazon SNS
+  * Amazon SQS
+  * AWS Lambda
+* Supports at least 3,500 **requests per second** to add data and 5,500 requests per second to retrieve
+* **Server access logging** provides detailed records for the requests that are made to a bucket
+
+## Glacier
+
 * **Glacier** - Retrieval Policy
   * Expedited (1 - 5 mins retrieval)
   * Standard (3 - 5 hours)
   * Bulk (5 - 12 hours)
-* **Glacier** - object == archive (upto 40 TB)
+* **Glacier** - object (in S3) == archive (in Glacier)
 * **Glacier** - bucket == vault
+* **Glacier** archive files can be upto 40 TB (note more than S3)
 * **Glacier** - Each vault has ONE vault policy & ONE lock policy
-  * **Vault Policy** - similar to bucket policy - restrict user access
+  * **Vault Policy** - similar to S3 bucket policy - restricts user access
   * **Lock Policy** - immutable - once set cannot be changed
     * WORM Policy - write once read many
-    * Forbid deleting an archive if it is less than 1 year = regulatory compliance
+    * Forbid deleting an archive if it is less than 1 year (configurable) = regulatory compliance
     * Nultifactor authentication on file access
 * Files retrieved from **Glacier** will be stored in Reduced Redundancy Storage class for a specified number of days
 * For faster retrieval from **Glacier** based on Retrieval Policy, Capacity Units may need to be purchased
 * Amazon S3 **Glacier** automatically encrypts data at rest using Advanced Encryption Standard (AES) 256-bit symmetric keys
 * **Glacier** range retrieval (byte range) is charged as per the volume of data retrieved
-* In a single **Glacier** upload, an archive of maximum 4GB size can be uploaded
-* Any **Glacier** upload above 100 MB  should use multipart upload
+* In a single **Glacier** upload, an archive of maximum 4GB (note 1GB less than S3) size can be uploaded
+* Any **Glacier** upload above 100 MB  should use multipart upload (note same as S3)
 * A **Glacier** vault can be deleted only when all its content archives are deleted
 * **Glacier** allows the user or application to be notified through SNS when the requested data becomes available
 * Bucket access policy (for S3) or Vault access policy (for Glacier) are resource based policies (directly attached to a particular resource - vault/bucket in this case), whereas IAM policies are user based policies
@@ -128,15 +237,6 @@
   * Works with file format CSV, JSON, Parquet
   * Works with all 3 retrieval options - Expedited, Standard & Bulk
 * **Glacier** inventory (of available objects) is updated every 24 hours - no real time data
-* Earlier S3 **performance** would start degrading with 100 TPS
-* Historically the recommended approach is to have **random 4 characters** in front of the key name for better distribution of objects across partitions
-* To host a static website the S3 bucket will have the same name as the domain or subdomain
-* S3 notification feature enables the user to receive notifications when certain events happen in a bucket. S3 supports following destinations
-  * Amazon SNS
-  * Amazon SQS
-  * AWS Lambda
-* Supports at least 3,500 requests per second to add data and 5,500 requests per second to retrieve
-* Server access logging provides detailed records for the requests that are made to a bucket
 
 ## CloudFront
 
@@ -146,47 +246,47 @@
   * **Regional edge caches** with larger caches than POP and holding less popular contents between POP and origin server
   * Data transfer over **Amazon's backbone network** between the origin server and the edge location
   * **Persistent connections** with the origin server
-* Default caching behavior - 
+* **Default caching** behavior - 
   * period - 24 hours
   * Don't cache based on caching headers
-* You can use the Cache-Control and Expires headers to control how long objects stay in the cache. Settings for Minimum TTL, Default TTL, and Maximum TTL also affect cache duration
-* After a file expires in cache, the next time the edge location gets a user request for the file, CloudFront forwards the request to the origin server to verify that the cache contains the latest version of the file. The response from the origin depends on whether the file has changed:
-  * If the CloudFront cache already has the latest version, the origin returns a 304 status code (Not Modified)
-  * If the CloudFront cache does not have the latest version, the origin returns a 200 status code (OK) and the latest version of the file
-* By default, CloudFront don't automatically compress contents
-* To access the contents from domain,, say www.example.com
+* You can use the Cache-Control and Expires **headers** to control how long objects stay in the cache. Settings for Minimum TTL, Default TTL, and Maximum TTL also affect cache duration
+* After a **file expires** in cache, subsequent edge location requests are forwarded to the origin server. The response from the origin -
+  * 304 status code (Not Modified), if the cache has the latest version
+  * 200 status code (OK) and the latest version of the file, if the cache doesn't have the latest version
+* By default, CloudFront doesn't automatically **compress** contents
+* To access the contents from **own domain**,, say www.example.com
   * Add a CNAME in CloudFront for www.example.com
   * Add a CNAME in DNS to route traffic to the CloudFront for a query against www.example.com
-* Choose a certificate to use that covers the alternate domain name. The list of certificates can include any of the following:
-  * Certificates provided by AWS Certificate Manager
+* Choose a **certificate** to use that covers the alternate domain name. The list of certificates can include any of the following:
+  * Certificates provided by AWS Certificate Manager (ACM)
   * Certificates that you purchased from a third-party certificate authority and uploaded to ACM
   * Certificates that you purchased from a third-party certificate authority and uploaded to the IAM certificate store
-* Popular with S3, but also works with **EC2 & Load Balancer**
-* Supports **RTMP (media)** protocol
-* Video content
-  * HTTP / HTTPS
+* **Origin server** could be S3, EC2, ELB or any external server
+* A distribution can hanve a maximum 10 **origin servers** (soft limit)
+* Video content - 
+  * **HTTP / HTTPS**
     * Apple HTTP Live Streaming (HLS)
     * Microsoft Smooth Streaming
-  * RTMP
+  * **RTMP**
     * Adobe Flash multimedia content
 * **Origin Access Identity (OAI)** is an user used by CloudFront to access the S3 files
 * **S3 bucket policy** gives access to OAI and thus preventing users from directly accessing the S3 files bypassing the Cloudfront
 * CloudFront **accesslogs** can be stored in an S3 bucket - contains detailed information about every user request that CloudFront receives
-* To serve the media of a WordPress website from CloudFront use the Apache .htaccess file to rewrite the URLs
-* Supports **SNI** (Server Name Indication). This allows CloudFront distributions to support multiple TLS certificates
-* The data transfer out of CloudFront is not chargeable
-* **Invalidation requests** to remove something from the cache is chargeable - removes both from regional edge cache and POP. Avoid invalidation request charges and unpredictable caching behavior use versions in file names or directory names for changes to take effect immediately (Only invalidation of index.html) migh be required
-* An invalidation path that includes the * wildcard counts as one path even if it causes CloudFront to invalidate thousands of files
-* CloudFront supports **Field Level Encryption**, so that the sensitive data can only be decrypted and viewed by certain components or services in the application stack
+* Supports **SNI** (Server Name Indication - a TLS extension). This allows CloudFront (also [ELB](#elb)) distributions to support multiple TLS certificates
+* **SNI** enables to serve multiple websites with different domain and certificates from the same IP and port. The webserver (e.g. Apache web server) can be configured to have separate document root for each domain (certificate)
+* **Invalidation requests** to remove something from the cache is chargeable - removes both from regional edge cache and POP
+* Avoid **invalidation request** charges and unpredictable caching behavior using version numbers in file names or directory names for changes to take effect immediately (Only invalidation of index.html migh be required)
+* An **invalidation request** path that includes the * wildcard counts as one path even if it causes CloudFront to invalidate thousands of files
+* CloudFront supports **Field Level Encryption**, so that the sensitive data can only be decrypted and viewed by a few specific components or services that have access to the private key
 * To use **Field Level Ecryption**, the specific fields and encryption public key need to be configured in CloudFront
 * Use **signed URLs** for the following cases:
-  * RTMP distribution. Signed cookies aren't supported for RTMP distributions.
-  * Restrict access to individual files, for example, an installation download for your application.
-  * Users are using a client (for example, a custom HTTP client) that doesn't support cookies.
+  * RTMP distribution. Signed cookies aren't supported for RTMP distributions
+  * Restrict access to individual files, for example, an installation download for your application
+  * Users are using a client (for example, a custom HTTP client) that doesn't support cookies
 * Use **signed cookies** for the following cases:
   * Provide access to multiple restricted files, for example, all of the files for a video in HLS format or all of the files in the subscribers' area of a website
   * You don't want to change your current URLs
-* Charges are applicable for - 
+* **Charges** are applicable for - 
   * Serving contents from edge locations
   * Transfering data to your origin, which includes DELETE, OPTIONS, PATCH, POST, and PUT requests
   * HTTPS requests
@@ -194,8 +294,7 @@
 * **Price class** - collection fo edge locations for the purpose of controlling cost
 * Contents are served only from the edge locations of the selected **price class**
 * Default **price class** includes all edge locations including the expensive ones
-* If you want to allow anyone to access the files in your Amazon S3 bucket using CloudFront URLs, you must grant public read permissions to the objects unless you secure your content in Amazon S3 by using a CloudFront origin access identity
-* If S3 is used as an origin server, the bucket name should be in all lowercase and cannot contain space
+* If [**S3**](#s3) is used as an origin server, the bucket name should be in all lowercase and cannot contain space
 * For a given distribution, multiple origins can be configured including both S3 and HTTP servers (EC2 / external servers) 
 * If you have two origins and only the default cache behavior, the default cache behavior will cause CloudFront to get objects from one of the origins, but the other origin will never be used. Hence a separate cache behavior needs to be configured for each origin specifying which URL path will be routed to which origin
 * CloudFront does not consider query strings or cookies when evaluating the path pattern
@@ -239,18 +338,18 @@
 
 ## Snowball
 
-* If it takes **more than a week** to transfer data over the network, prefer Snowball
+* **When to use** - if it takes more than a week to transfer data over the network, prefer Snowball
 * **Snowball Edges** have computational capabilities
-  * <= 100 TB
   * Can be **Storage Optimized (24 vCPU)** or **Compute Optimized (52 vCPU) & optional GPU**
   * Allows processing **on the go**
-  * Useful for IoT capture, machine learning, data migration, image collation etc.
-* An 80 TB Snowball appliance and 100 TB Snowball Edge appliance only have 72 TB and 83 TB of usable capacity respectively
+  * **Use cases** - Useful for IoT capture, machine learning, data migration, image collation etc.
+* An 80 TB Snowball appliance has 72 TB **usable capacity**
+* 100 TB Snowball Edge appliance has 83 TB of **usable capacity**
 
 ## Snowmobile
 
-* 100 PB in capacity
-* Better than snowball if data to be transferred is more than 10 PB
+* 100 PB in **capacity**
+* **When to use** - Better than snowball if data to be transferred is more than 10 PB
 
 ## Storage Gateway
 
@@ -453,7 +552,7 @@
 * Each access log file is automatically encrypted before it is stored in your S3 bucket and decrypted when you access it
 * After you add an Availability Zone to the ELB, the load balancer starts routing requests to the registered instances in that Availability Zone. Note that you can modify the Availability Zones for your load balancer at any time
 
-## Auto Scaling Group
+## Auto Scaling
 
 * Auto scaling group is configured to register new instances to a traget group of **ELB**
 * **IAM role** attached to the ASG will get assigned to the instances
@@ -649,7 +748,7 @@
 * A failover in a **Multi-AZ** deployment can be forced by rebooting the DB
 * Two ways of improving performance
   * Read replicas
-  * ElasticCache
+  * ElastiCache
 * **Replication** for Disaster Recovery is synchronous (across AZ - Automatic failover - DNS endpoint remains same) - Multi AZ
 * **Replicas** can be promoted to their own DB
 * Automated **backups**:
@@ -727,10 +826,10 @@
 * The amount of replication is independent of the number of DB instances in your cluster
 * The Aurora shared storage architecture makes your data independent from the DB instances in the cluster. For example, you can add a DB instance quickly because Aurora doesn't make a new copy of the table data. Instead, the DB instance connects to the shared volume that already contains all your data
 
-## ElasticCache
+## ElastiCache
 
 * ElastiCache is to get managed Redis or Memcached
-* ElasticCache features - 
+* ElastiCache features - 
   * Write Scaling using **sharding**
   * Read Scaling using **Read Replicas**
   * **Multi AZ** with Failover Capability
@@ -954,7 +1053,7 @@
 * Active Directory - SAML Federation
 * If the corporate identity store is not compatible with SAML 2.0, then we can build a custom identity broker application to perform a similar function. The broker application authenticates users, requests temporary credentials for users from Amazon STS, and then provides them to the user to access AWS resources.
 
-## AWS OpsWorks
+## OpsWorks
 
 * Managed **configuration management** system
 * Provides managed instancess of **Chef** and **Puppet**
@@ -978,19 +1077,19 @@
   * **All at once** - Traffic is shifted to the new Lambda version all at once
 
 
-## AWS Directory Service
+## Directory Service
 
 * Managed Microsoft Active Directory
 * Corporate Active Directory can be integrated with AWS using AWS Directory Service AD Connector
 * IAM Role can be assigned to the users or groups from the coprorate Active Directory once it is integrated with the VPC via the AWS Directory Service AD Connector
 
-## AWS Shield
+## Shield
 
 * All AWS customers benefit from the automatic protections of **AWS Shield Standard**, at no additional charge
 * **AWS Shield Standard** with Amazon CloudFront and Amazon Route 53 provides comprehensive availability protection against all known infrastructure (Layer 3 and 4) attacks like SYN/UDP floods, reflection attacks, and others to support high availability of your applications on AWS
 * **AWS Shield Advanced** provides additional detection and mitigation against large and sophisticated DDoS attacks
 
-## AWS WAF
+## WAF
 
 * AWS WAF helps protects your website from common attack techniques like SQL injection and Cross-Site Scripting (XSS)
 * Rate based rule allows you to specify the number of web requests that are allowed by a client IP in a trailing, continuously updated, 5 minute period
@@ -998,11 +1097,11 @@
 * The custmers can create rules to filter web traffic based on conditions that include IP addresses, HTTP headers and body, or custom URIs
 * WAF can be used with both ALB & CloudFront
 
-## Amazon Macie
+## Macie
 
 * Amazon Macie recognizes sensitive data such as personally identifiable information (PII) or intellectual property, and provides us with dashboards and alerts that give visibility into how this data is being accessed or moved
 
-## Amazon Inspector
+## Inspector
 
 * Amazon Inspector automatically assesses applications for vulnerabilities or deviations from best practices and produces a detailed list of security findings prioritized by level of severity
 * Amazon Inspector includes a knowledge base of hundreds of rules mapped to common security best practices and vulnerability definitions such as remote root login being enabled, or vulnerable software versions installed
@@ -1012,12 +1111,12 @@
 * Lamda provides CloudWatch metrics for Invocations and Errors
 * Lambda@Edge function can intercept the request and response at the CloudFront edge locations and modify the request and responses. Possible use cases include URL rewriting, modifying requests based on the client user-agent etc.
 
-## AWS Config
+## Config
 
 * AWS Config is a fully managed service that provides you with an AWS resource inventory, configuration history, and configuration change notifications to enable security and governance
 * If configurations do not match the configured compliance rules, it can trigger notifications
 
-## AWS Systems Manager
+## Systems Manager
 
 * Allows to take action on groups of AWS resources
 * Provides a unified user interface so you can view operational data from multiple AWS services and allows you to automate operational tasks across your AWS resources
@@ -1034,11 +1133,11 @@
   * OpsCenter - provides a central location where operations engineers, IT professionals, and others can view, investigate, and resolve operational issues related to their environment
   * Maintenance Windows - lets you schedule windows of time to run administrative and maintenance tasks across your instances
 
-## AWS Resource Access Manager
+## Resource Access Manager
 
 * AWS Resource Access Manager (AWS RAM) enables you to share your resources with any AWS account or organization in AWS Organizations. Customers who operate multiple accounts can create resources centrally and use AWS RAM to share them with all of their accounts to reduce operational overhead. AWS RAM is available at no additional charge
 
-## AWS Secrets Manager
+## Secrets Manager
 
 * You can encrypt secrets at rest to reduce the likelihood of unauthorized users viewing sensitive information
 * To retrieve secrets, you simply replace secrets in plain text in your applications with code to pull in those secrets programmatically using the Secrets Manager APIs
@@ -1050,11 +1149,11 @@
 * Secrets Manager is more expensive than AWS Systems Manager
 * Parameter Store is now integrated with Secrets Manager so that you can retrieve Secrets Manager secrets when using other AWS services that already support references to Parameter Store parameters
 
-## AWS Organizations
+## Organizations
 
 * AWS Organizations is an account management service that lets you consolidate multiple AWS accounts into an organization that you create and centrally manage. With AWS Organizations, you can create member accounts and invite existing accounts to join your organization. You can organize those accounts into groups and attach policy-based controls
 
-## AWS CloudHSM
+## CloudHSM
 
 * AWS CloudHSM provides hardware security modules in the AWS Cloud. A hardware security module (HSM) is a computing device that processes cryptographic operations and provides secure storage for cryptographic keys
 * Use cases
@@ -1065,7 +1164,7 @@
 * You can implement CloudHSMs in multiple Availability Zones with replication between them to provide for high availability and storage resilience
 * 
 
-## AWS KMS
+## KMS
 
 * There are typically three scenarios for how data is encrypted using AWS KMS. Firstly, you can use KMS APIs directly to encrypt and decrypt data using your master keys stored in KMS. Secondly, you can choose to have AWS services encrypt your data using your master keys stored in KMS. In this case data is encrypted using data keys that are protected by your master keys in KMS. Thirdly, you can use the AWS Encryption SDK that is integrated with AWS KMS to perform encryption within your own applications, whether they operate in AWS or not.
 * **Envelope Encryption** - While AWS KMS does support sending data less than 4 KB to be encrypted directly, envelope encryption can offer significant performance benefits. When you encrypt data directly with AWS KMS it must be transferred over the network. Envelope encryption reduces the network load since only the request and delivery of the much smaller data key go over the network. The data key is used locally in your application or encrypting AWS service, avoiding the need to send the entire block of data to KMS and suffer network latency
@@ -1083,19 +1182,19 @@
 * Encryption Algorithm - AES with 256 bit key in GCM mode
 * Generates a unique data key. This operation returns a plaintext copy of the data key and a copy that is encrypted under a customer master key (CMK) that you specify. You can use the plaintext key to encrypt your data outside of KMS and store the encrypted data key with the encrypted data
 
-## AWS Firewall Manager
+## Firewall Manager
 
 * AWS Firewall Manager simplifies your AWS WAF administration and maintenance tasks across multiple accounts and resources. With AWS Firewall Manager, you set up your firewall rules just once. The service automatically applies your rules across your accounts and resources, even as you add new resources
 
-## AWS GuardDuty
+## GuardDuty
 
 * Amazon GuardDuty is a continuous security monitoring service that analyzes and processes the following data sources: VPC Flow Logs, AWS CloudTrail event logs, and DNS logs. It uses threat intelligence feeds, such as lists of malicious IPs and domains, and machine learning to identify unexpected and potentially unauthorized and malicious activity within your AWS environment. This can include issues like escalations of privileges, uses of exposed credentials, or communication with malicious IPs, URLs, or domains. For example, GuardDuty can detect compromised EC2 instances serving malware or mining bitcoin. It also monitors AWS account access behavior for signs of compromise, such as unauthorized infrastructure deployments, like instances deployed in a region that has never been used, or unusual API calls, like a password policy change to reduce password strength
 
-## AWS SingleSignOn
+## Single Sign-On
 
 * AWS SSO is an AWS service that enables you to use your existing credentials from your Microsoft Active Directory to access your cloud-based applications, such as AWS accounts and business applications (Office 365, Salesforce, Box), by using single sign-on (SSO)
 
-## AWS Trusted Advisor
+## Trusted Advisor
 
 * AWS Trusted Advisor is an online tool that provides you real time guidance to help you provision your resources following AWS best practices
 * Trusted Advisor scans your AWS Infrastructure, compares it to AWS best practices in 5 categories and provides recommended actions
@@ -1105,12 +1204,12 @@
   * Fault Tolerance
   * Service Limits
 
-## AWS Budgets
+## Budgets
 
 * AWS Budgets gives you the ability to set custom budgets that alert you when your costs or usage exceed (or are forecasted to exceed) your budgeted amount
 * You can also use AWS Budgets to set reservation utilization or coverage targets and receive alerts when your utilization drops below the threshold you define
 
-## AWS Backup
+## Backup
 
 * AWS Backup is a fully managed backup service that makes it easy to centralize and automate the back up of data across AWS services in the cloud as well as on premises using the AWS Storage Gateway. Using AWS Backup, you can centrally configure backup policies and monitor backup activity for AWS resources, such as Amazon EBS volumes, Amazon RDS databases, Amazon DynamoDB tables, Amazon EFS file systems, and AWS Storage Gateway volumes
 
@@ -1141,9 +1240,9 @@ ASG with 20 EC2 instance per Region | AWS soft limit
 Webapp across Regions | Amazon Route53
 Accessing service from a different region VPC | VPC Peering + Interface VPC Endpoint + PrivateLink + Network Load Balancer
 Access over VPC Peering | Edge to edge and transitive routing not supported
-DB cache / Session storage | ElasticCache
+DB cache / Session storage | ElastiCache
 Scalable NoSQL DB | DynamoDB
-DB Performance | Read Replica + ElasticCache
+DB Performance | Read Replica + ElastiCache
 DB Disaster Recovery | Multi AZ
 Greater Control on instances | EC2, EMR
 Workflow | Amazon SWF
