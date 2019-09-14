@@ -156,6 +156,8 @@
 
 ## S3
 
+[TOC](#table-of-content)
+
 * **Object** based storage (files)
 * Files can be from **0 Bytes & 5 TB**
 * Bucket web address: `https://s3-<AZ name>.amazonaws.com/<bucketname>` e.g. `https://s3-eu-west-1.amazonaws.com/myuniquename`
@@ -270,6 +272,8 @@
 
 ## Glacier
 
+[TOC](#table-of-content)
+
 * **Glacier** - Retrieval Policy
   * Expedited (1 - 5 mins retrieval)
   * Standard (3 - 5 hours)
@@ -303,6 +307,8 @@
 * **Glacier** inventory (of available objects) is updated every 24 hours - no real time data
 
 ## CloudFront
+
+[TOC](#table-of-content)
 
 * Content Delivery Network (CDN) - reduced latency and reduced load on server
 * Reasons for good performance -
@@ -402,6 +408,8 @@
 
 ## Snowball
 
+[TOC](#table-of-content)
+
 * **When to use** - if it takes more than a week to transfer data over the network, prefer Snowball
 * **Snowball Edges** have computational capabilities
   * Can be **Storage Optimized (24 vCPU)** or **Compute Optimized (52 vCPU) & optional GPU**
@@ -412,10 +420,14 @@
 
 ## Snowmobile
 
+[TOC](#table-of-content)
+
 * 100 PB in **capacity**
 * **When to use** - Better than snowball if data to be transferred is more than 10 PB
 
 ## Storage Gateway
+
+[TOC](#table-of-content)
 
 * Storage Gateway supports **hybrid cloud** by allowing the on-primise resources access the cloud storage like EBS, S3 etc. through standard protocols
 * Storage Gateway **types** - 
@@ -440,6 +452,8 @@
 
 ## Athena
 
+[TOC](#table-of-content)
+
 * **Serverless** service
 * Allows to do analytics directly on **S3**
 * Supports **data formats** CSV, JSON, ORC, Avro, Parquet (built on Presto)
@@ -447,6 +461,8 @@
 * **Good for** analyzing VPC Flow Logs, ELB Logs etc.
 
 ## IAM
+
+[TOC](#table-of-content)
 
 * **Global** service
 * **Users** for individuals
@@ -475,6 +491,8 @@
 * Caching based on query parameters and cookies are also possible with the similar options. It is recommended to forward only those cookies or query parameters to the origin server for which the server returns different objects. This will reduce the load on the server and let CloudFront serve requests from the edge location cache
 
 ## EC2
+
+[TOC](#table-of-content)
 
 * **Security Groups** are for network security
 * **Security group**s are locked down to a region / VPC combination
@@ -581,6 +599,8 @@
 
 ## EFS
 
+[TOC](#table-of-content)
+
 * Supports Network File System version 4 (**NFSv4**)
 * **Read after write** consistency
 * Data is stored across **multiple AZ's** within a region
@@ -590,6 +610,8 @@
   * **mount** the EFS at the appropriate location
 
 ## ELB
+
+[TOC](#table-of-content)
   
 * **ELB types** - 
   * **Classic Load Balancer** (V1 - old generation) - Lower cost than ALB, but less flexibility
@@ -617,6 +639,8 @@
 * After you add an Availability Zone to the ELB, the load balancer starts routing requests to the registered instances in that Availability Zone. Note that you can modify the Availability Zones for your load balancer at any time
 
 ## Auto Scaling
+
+[TOC](#table-of-content)
 
 * Auto scaling group is configured to register new instances to a traget group of **ELB**
 * **IAM role** attached to the ASG will get assigned to the instances
@@ -651,6 +675,8 @@
 * An Auto Scaling group is associated with one launch configuration at a time, and you can't modify a launch configuration after you've created it. To change the launch configuration for an Auto Scaling group, use an existing launch configuration as the basis for a new launch configuration. Then, update the Auto Scaling group to use the new launch configuration. After you change the launch configuration for an Auto Scaling group, any new instances are launched using the new configuration options, but existing instances are not affected
 
 ## EBS
+
+[TOC](#table-of-content)
 
 * An EBS volume is a **network drive**
 * An EC2 machine by default loses its **root volume** when terminated
@@ -736,6 +762,8 @@
 
 ## CloudWatch
 
+[TOC](#table-of-content)
+
 * CloudWatch is for monitoring performance, whereas **CloudTrail** is for auditing API calls
 * CloudWatch with EC2 will monitor events every 5 min by default. With **detailed monitoring**, the interval will be 1 min
 * CloudWatch alarms can be created to trigger notifications
@@ -763,6 +791,8 @@
 
 ## CloudTrail
 
+[TOC](#table-of-content)
+
 * By default CloudTrail keeps account activity details upto 90 days
 * These events are limited to management events with create, modify, and delete API calls and account activity. For a complete record of account activity, including all management events, data events, and read-only activity, you’ll need to configure a CloudTrail trail
 * By setting up a CloudTrail trail you can deliver your CloudTrail events to Amazon S3, Amazon CloudWatch Logs, and Amazon CloudWatch Events
@@ -772,6 +802,8 @@
 
 ## CloudFormation
 
+[TOC](#table-of-content)
+
 * AWS CloudFormation templates are JSON or YAML-formatted text files that are comprised of five types of elements:
   * An optional list of template parameters (input values supplied at stack creation time)
   * An optional list of output values (e.g. the complete URL to a web application)
@@ -780,6 +812,8 @@
   * A template file format version number
 
 ## Route 53
+
+[TOC](#table-of-content)
   
 * In AWS, the most common records are:
   * **A**: URL to IPv4
@@ -801,6 +835,8 @@
 * **Geoproximity** - Must use Route 53 Traffic Flow. Routes traffic based on geographic location of users and resources. This can be further influenced with biases
 
 ## RDS
+
+[TOC](#table-of-content)
 
 * Upto 5 **Read Replicas** (Async Replication - within AZ, cross AZ or cross Region)
 * **Read replicas** of read replicas are possible
@@ -839,15 +875,18 @@
 
 ## DynamoDB
 
+[TOC](#table-of-content)
+
 * Supports both **document and key-value** data model
 * Stored on **SSD storage**
 * **Spread across** 3 geographically distributed data centers
 * Supports both **Eventual Consistant** Reads (Default) & **Strongly Consistant** Reads
 * **Serverless** service
 * Amazon DynamoDB Accelerator (DAX) is a fully managed, highly available, in-memory cache that can reduce Amazon DynamoDB response times from milliseconds to microseconds
-* 
 
 ## Redshift
+
+[TOC](#table-of-content)
 
 * Amazon's **data warehouse** solution
 * Single node (160 GB) or multi node (leader node and compute node - upto 128 compute nodes)
@@ -867,6 +906,8 @@
 * work load management
 
 ## Aurora
+
+[TOC](#table-of-content)
 
 * Aurora **storage** automatically grows in increments of 10GB, up to 64 TB
 * Aurora can have 15 **replicas** while MySQL has 5, and the replication process is faster (sub 10 ms replica lag)
@@ -892,6 +933,8 @@
 
 ## ElastiCache
 
+[TOC](#table-of-content)
+
 * ElastiCache is to get managed Redis or Memcached
 * ElastiCache features - 
   * Write Scaling using **sharding**
@@ -905,6 +948,8 @@
   * Lazy loading
   
 ## VPC
+
+[TOC](#table-of-content)
 
 * **VPC Architecture Diagram**
 
@@ -1046,6 +1091,8 @@
 
 ## SQS
 
+[TOC](#table-of-content)
+
 * SQS is **pull based**, NOT push based
 * Messages are 256 KB in **size**
 * Messages can be kept in the queeu from 1 minute to 14 days; the default **retention period** is 4 days
@@ -1065,6 +1112,8 @@
 
 ## SWF
 
+[TOC](#table-of-content)
+
 * Workflow service viz. human interaction
 * SWF workflow execution can last upto 1 year
 * SWF provides a task oriented API, whereas SQS peovides a message oriented API
@@ -1078,6 +1127,8 @@
 
 ## SNS
 
+[TOC](#table-of-content)
+
 * **Push notifications** to mobile devices
 * SMS, email & HTTP endpoints
 * Push based delivery, no polling
@@ -1086,6 +1137,8 @@
 
 ## API Gateway
 
+[TOC](#table-of-content)
+
 * Supports **caching** of API response
 * Allows enabling **CORS** to access multiple AWS resources with different origin name using Javascript
 * Allows logging result to **CloudWatch**
@@ -1093,6 +1146,8 @@
 * **CORS** is enforced by client's browser
 
 ## Kinesis
+
+[TOC](#table-of-content)
 
 * Amazon alternative of Kafka
 * Streaming data
@@ -1110,6 +1165,8 @@
 
 ## Cognito
 
+[TOC](#table-of-content)
+
 * User pool consists of user data like email, userid etc. It handles authentication, registration, recovery etc.
 * Identity pools are temporary IAM roles to access various AWS resources
 * Cognito uses push synchronizations and SNS notifications to push updates across devices
@@ -1119,10 +1176,14 @@
 
 ## OpsWorks
 
+[TOC](#table-of-content)
+
 * Managed **configuration management** system
 * Provides managed instancess of **Chef** and **Puppet**
 
 ## CodeDeploy
+
+[TOC](#table-of-content)
 
 * **EC2/on-premise Deployment Configuration**
   * All At Once
@@ -1143,17 +1204,23 @@
 
 ## Directory Service
 
+[TOC](#table-of-content)
+
 * Managed Microsoft Active Directory
 * Corporate Active Directory can be integrated with AWS using AWS Directory Service AD Connector
 * IAM Role can be assigned to the users or groups from the coprorate Active Directory once it is integrated with the VPC via the AWS Directory Service AD Connector
 
 ## Shield
 
+[TOC](#table-of-content)
+
 * All AWS customers benefit from the automatic protections of **AWS Shield Standard**, at no additional charge
 * **AWS Shield Standard** with Amazon CloudFront and Amazon Route 53 provides comprehensive availability protection against all known infrastructure (Layer 3 and 4) attacks like SYN/UDP floods, reflection attacks, and others to support high availability of your applications on AWS
 * **AWS Shield Advanced** provides additional detection and mitigation against large and sophisticated DDoS attacks
 
 ## WAF
+
+[TOC](#table-of-content)
 
 * AWS WAF helps protects your website from common attack techniques like SQL injection and Cross-Site Scripting (XSS)
 * Rate based rule allows you to specify the number of web requests that are allowed by a client IP in a trailing, continuously updated, 5 minute period
@@ -1163,24 +1230,34 @@
 
 ## Macie
 
+[TOC](#table-of-content)
+
 * Amazon Macie recognizes sensitive data such as personally identifiable information (PII) or intellectual property, and provides us with dashboards and alerts that give visibility into how this data is being accessed or moved
 
 ## Inspector
+
+[TOC](#table-of-content)
 
 * Amazon Inspector automatically assesses applications for vulnerabilities or deviations from best practices and produces a detailed list of security findings prioritized by level of severity
 * Amazon Inspector includes a knowledge base of hundreds of rules mapped to common security best practices and vulnerability definitions such as remote root login being enabled, or vulnerable software versions installed
 
 ## Lambda
 
+[TOC](#table-of-content)
+
 * Lamda provides CloudWatch metrics for Invocations and Errors
 * Lambda@Edge function can intercept the request and response at the CloudFront edge locations and modify the request and responses. Possible use cases include URL rewriting, modifying requests based on the client user-agent etc.
 
 ## Config
 
+[TOC](#table-of-content)
+
 * AWS Config is a fully managed service that provides you with an AWS resource inventory, configuration history, and configuration change notifications to enable security and governance
 * If configurations do not match the configured compliance rules, it can trigger notifications
 
 ## Systems Manager
+
+[TOC](#table-of-content)
 
 * Allows to take action on groups of AWS resources
 * Provides a unified user interface so you can view operational data from multiple AWS services and allows you to automate operational tasks across your AWS resources
@@ -1199,9 +1276,13 @@
 
 ## Resource Access Manager
 
+[TOC](#table-of-content)
+
 * AWS Resource Access Manager (AWS RAM) enables you to share your resources with any AWS account or organization in AWS Organizations. Customers who operate multiple accounts can create resources centrally and use AWS RAM to share them with all of their accounts to reduce operational overhead. AWS RAM is available at no additional charge
 
 ## Secrets Manager
+
+[TOC](#table-of-content)
 
 * You can encrypt secrets at rest to reduce the likelihood of unauthorized users viewing sensitive information
 * To retrieve secrets, you simply replace secrets in plain text in your applications with code to pull in those secrets programmatically using the Secrets Manager APIs
@@ -1215,9 +1296,13 @@
 
 ## Organizations
 
+[TOC](#table-of-content)
+
 * AWS Organizations is an account management service that lets you consolidate multiple AWS accounts into an organization that you create and centrally manage. With AWS Organizations, you can create member accounts and invite existing accounts to join your organization. You can organize those accounts into groups and attach policy-based controls
 
 ## CloudHSM
+
+[TOC](#table-of-content)
 
 * AWS CloudHSM provides hardware security modules in the AWS Cloud. A hardware security module (HSM) is a computing device that processes cryptographic operations and provides secure storage for cryptographic keys
 * Use cases
@@ -1229,6 +1314,8 @@
 * 
 
 ## KMS
+
+[TOC](#table-of-content)
 
 * There are typically three scenarios for how data is encrypted using AWS KMS. Firstly, you can use KMS APIs directly to encrypt and decrypt data using your master keys stored in KMS. Secondly, you can choose to have AWS services encrypt your data using your master keys stored in KMS. In this case data is encrypted using data keys that are protected by your master keys in KMS. Thirdly, you can use the AWS Encryption SDK that is integrated with AWS KMS to perform encryption within your own applications, whether they operate in AWS or not.
 * **Envelope Encryption** - While AWS KMS does support sending data less than 4 KB to be encrypted directly, envelope encryption can offer significant performance benefits. When you encrypt data directly with AWS KMS it must be transferred over the network. Envelope encryption reduces the network load since only the request and delivery of the much smaller data key go over the network. The data key is used locally in your application or encrypting AWS service, avoiding the need to send the entire block of data to KMS and suffer network latency
@@ -1248,17 +1335,25 @@
 
 ## Firewall Manager
 
+[TOC](#table-of-content)
+
 * AWS Firewall Manager simplifies your AWS WAF administration and maintenance tasks across multiple accounts and resources. With AWS Firewall Manager, you set up your firewall rules just once. The service automatically applies your rules across your accounts and resources, even as you add new resources
 
 ## GuardDuty
+
+[TOC](#table-of-content)
 
 * Amazon GuardDuty is a continuous security monitoring service that analyzes and processes the following data sources: VPC Flow Logs, AWS CloudTrail event logs, and DNS logs. It uses threat intelligence feeds, such as lists of malicious IPs and domains, and machine learning to identify unexpected and potentially unauthorized and malicious activity within your AWS environment. This can include issues like escalations of privileges, uses of exposed credentials, or communication with malicious IPs, URLs, or domains. For example, GuardDuty can detect compromised EC2 instances serving malware or mining bitcoin. It also monitors AWS account access behavior for signs of compromise, such as unauthorized infrastructure deployments, like instances deployed in a region that has never been used, or unusual API calls, like a password policy change to reduce password strength
 
 ## Single Sign-On
 
+[TOC](#table-of-content)
+
 * AWS SSO is an AWS service that enables you to use your existing credentials from your Microsoft Active Directory to access your cloud-based applications, such as AWS accounts and business applications (Office 365, Salesforce, Box), by using single sign-on (SSO)
 
 ## Trusted Advisor
+
+[TOC](#table-of-content)
 
 * AWS Trusted Advisor is an online tool that provides you real time guidance to help you provision your resources following AWS best practices
 * Trusted Advisor scans your AWS Infrastructure, compares it to AWS best practices in 5 categories and provides recommended actions
@@ -1270,10 +1365,14 @@
 
 ## Budgets
 
+[TOC](#table-of-content)
+
 * AWS Budgets gives you the ability to set custom budgets that alert you when your costs or usage exceed (or are forecasted to exceed) your budgeted amount
 * You can also use AWS Budgets to set reservation utilization or coverage targets and receive alerts when your utilization drops below the threshold you define
 
 ## Backup
+
+[TOC](#table-of-content)
 
 * AWS Backup is a fully managed backup service that makes it easy to centralize and automate the back up of data across AWS services in the cloud as well as on premises using the AWS Storage Gateway. Using AWS Backup, you can centrally configure backup policies and monitor backup activity for AWS resources, such as Amazon EBS volumes, Amazon RDS databases, Amazon DynamoDB tables, Amazon EFS file systems, and AWS Storage Gateway volumes
 
@@ -1282,6 +1381,8 @@
 * Amazon EFS backup functionality is built on AWS Backup
 
 ## Scenario Question Tips
+
+[TOC](#table-of-content)
 
 Term | AWS Services
 ---- | ------------
@@ -1333,6 +1434,8 @@ Services encrypted by default | Glacier, Storage Gateway, CloudTrail
 
 ## Serverless Services
 
+[TOC](#table-of-content)
+
 * Compute
   * AWS Lambda
   * Lambda@Edge
@@ -1358,6 +1461,8 @@ Services encrypted by default | Glacier, Storage Gateway, CloudTrail
   * Glue
 
 ## Common Architecture
+
+[TOC](#table-of-content)
 
 * **Accessing a service from a different region without going through internet** - 
   * Use a inter-region VPC peering to connect the two provider VPC in different regions
