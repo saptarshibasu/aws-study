@@ -2,93 +2,157 @@
 
 ## Table of Content
 
-### Storage
+#### Storage
+
 
 [Amazon S3](#s3)
+
 [Amazon S3 Glacier](#glacier)
+
 [Amazon EBS](#ebs)
+
 [Amazon EFS](#efs)
+
 [AWS Storage Gateway](#storage-gateway)
+
 [AWS Snowball](#snowball)
+
 [AWS Snowmobile](#snowmobile)
+
 [AWS Backup](#backup)
 
-### Compute
+
+#### Compute
+
 
 [Amazon EC2](#ec2)
+
 [AWS Lambda](#lambda)
 
-### Networking & Content Delivery
+
+#### Networking & Content Delivery
+
 
 [Amazon CloudFront](#cloudfront)
+
 [Elastic Load Balancing](#elb)
+
 [Amazon Route 53](#route-53)
+
 [Amazon VPC](#vpc)
+
 [Amazon API Gateway](#api-gateway)
 
-### Database
+
+#### Database
+
 
 [Amazon RDS](#rds)
+
 [Amazon DynamoDB](#dynamodb)
+
 [Amazon Redshift](#redshift)
+
 [Amazon Aurora](#aurora)
+
 [Amazon ElastiCache](#elasticache)
 
-### Application Integration
+
+#### Application Integration
+
 
 [Amazon SQS](#sqs)
+
 [Amazon SWF](#swf)
+
 [Amazon SNS](#sns)
 
-### Security, Identity & Compliance
+
+#### Security, Identity & Compliance
+
 
 [AWS Identity & Access Management (AWS IAM)](#iam)
+
 [AWS Shield](#shield)
+
 [AWS WAF](#waf)
+
 [Amazon Macie](#macie)
+
 [Amazon Inspector](#inspector)
+
 [AWS Resource Access Manager (AWS RAM)](#resource-access-manager)
+
 [Amazon Cognito](#cognito)
+
 [AWS Secrets Manager](#secrets-manager)
+
 [AWS Single Sign-on](#single-sign-on)
+
 [AWS Firewall Manager](#firewall-manager)
+
 [Amazon GuardDuty](#guardduty)
+
 [AWS Directory Service](#directory-service)
 
-### Cryptography & PKI
+
+#### Cryptography & PKI
+
 
 [AWS CloudHSM](#cloudhsm)
+
 [AWS Ket Management Service (AWS KMS)](#kms)
 
-### Management & Governance
+
+#### Management & Governance
+
 
 [AWS Auto Scaling](#auto-scaling)
+
 [Amazon CloudWatch](#cloudwatch)
+
 [AWS CloudTrail](#cloudtrail)
+
 [AWS CloudFormation](#cloudformation)
+
 [AWS OpsWorks](#opsworks)
+
 [AWS Organizations](#organizations)
+
 [AWS Config](#config)
+
 [AWS Systems Manager](#systems-manager)
+
 [AWS Trusted Advisor](#trusted-advisor)
+
 [AWS Budgets](#budgets)
 
-### Analytics
+
+#### Analytics
 
 [Amazon Athena](#ahena)
+
 [Amazon Kinesis](#kinesis)
 
-### Developer Tools
+
+#### Developer Tools
+
 
 [AWS CodeDeploy](#codedeploy)
 
-### Others
+
+#### Others
+
 
 [Scenario Question Tips](#scenario-question-tips)
+
 [Serverless Services](#serverless-services)
+
 [Common Architecture](#common-architecture)
 
+
 ---
+
 
 ## S3
 
