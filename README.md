@@ -685,14 +685,16 @@
 * LBs can scale but not instantaneously – contact AWS for a “warm-up”
 * ELBs do not have a predefined IPv4 address. We resolve to them using a **DNS name**
 * **504 error** means the gateway has timed out and it is an application issue and NOT a load balancer issue
-* **Sticky session** - required if the ec2 instance is writing a file to the local disk. Traffic will not go to other ec2 instances for the session
-* **Cross zone load balancing** - If one AZ does not receive any traffic
+* **Sticky session** - required if the ec2 instance is writing a file to the local disk. Traffic will not go to other ec2 instances for the session (uses cookie and the validity duration of the cookie is configured at the time of enabling sticky session)
+* If one AZ does not receive any traffic, check
+  * if **Cross zone load balancing** is enabled
+  * if the AZ is added in the load balancer config
 * **Path Patterns** - Allows to route traffic based on the URL patterns
 * The VPC and subnets need to be specified during configuration
-* Elastic Load Balancing provides access logs that capture detailed information about requests sent to your load balancer
-* Elastic Load Balancing captures the logs and stores them in the Amazon S3 bucket that you specify as compressed files
-* Each access log file is automatically encrypted before it is stored in your S3 bucket and decrypted when you access it
-* After you add an Availability Zone to the ELB, the load balancer starts routing requests to the registered instances in that Availability Zone. Note that you can modify the Availability Zones for your load balancer at any time
+* Elastic Load Balancing provides **access logs** that capture detailed information about requests sent to your load balancer
+* Elastic Load Balancing captures the **access logs** and stores them in the Amazon S3 bucket (that you specify) as compressed and encrypted files
+* Each **access log** file is automatically encrypted before it is stored in your S3 bucket and decrypted when you access it
+* ALBs are **priced** per http request, Classic ELBs are priced by bandwidth consumption. Also ALBs are charged per routing rule. For a very high volume of small requests, ALBs can be much more expensive than an ELB
 
 
 ## Auto Scaling
@@ -824,12 +826,13 @@
 [TOC](#table-of-content)
 
 * CloudWatch is for monitoring performance, whereas **CloudTrail** is for auditing API calls
-* CloudWatch with EC2 will monitor events every 5 min by default. With **detailed monitoring**, the interval will be 1 min
-* CloudWatch alarms can be created to trigger notifications
+* CloudWatch with EC2 will monitor events every 5 min by default - **basic monitoring**
+* With **detailed monitoring**, the interval will be 1 min
+* CloudWatch alarms can be created to trigger notifications when a certain metric reaches a certain value
 * Enabling CloudWatch logs for **EC2**
   * Assign appropriate CloudWatch access policy to the IAM role
   * Install CloudWatch agent (awslogsd) in EC2
-* Since AWS does not have access to the  underlying OS, some metrics are **missing** including disk and memory utilization
+* Since EC2 does not have access to the  underlying OS, some metrics are **missing** including disk and memory utilization
 * CloudWatch can collect metrics and logs from services, resources and applications on AWS as well on-premise services
 * CloudWatch Alarms can be created to 
   * send SNS notifications
@@ -841,11 +844,21 @@
     * Reboot
 * CloudWatch Events allow users to do some activity (by triggering a Lambda function) on real time when some system change happens. CloudTrail cannot do this because CloudTrail deliver logs in around 15 minutes interval
 * CloudWatch Events doesn't get triggered on read events
-* CloudWatch Alarms 
+* CloudWatch **Alarm Status**
   * impaired - checks failed
   * insufficient data - checks in progress 
   * ok - all checks passed
 * Amazon CloudWatch does not aggregate data across Regions. Therefore, metrics are completely separate between Regions
+* For EC2, AWS provides the following CloudWatch metrics
+  * CPU - CPU Utilization + Burst Credit Usage / Balance
+  * Network - Network In / Out
+  * Disk - Read / Write for Ops / Bytes (only for instance store)
+  * Status Check
+    * Instance status - checks the EC2 VM
+    * System status - checks the underlying hardware
+* For custom metrics
+  * Basic resolution - 1 min interval
+  * High resolution - 1 sec interval
 
 
 ## CloudTrail
@@ -1341,27 +1354,28 @@
 
 [TOC](#table-of-content)
 
-* Allows to take action on groups of AWS resources
-* Provides a unified user interface so you can view operational data from multiple AWS services and allows you to automate operational tasks across your AWS resources
+* Allows to take action on **groups of AWS resources**
+* Provides a unified user interface so you can view operational data from multiple AWS services and allows you to **automate operational tasks** across your AWS resources
 * Sub modules
-  * Session Manager - Browser based shell without the need to open inbound ports, maintain bastion hosts, and manage SSH keys
-  * Run Command - Provides a simple way of automating common administrative tasks across groups of instances such as registry edits, user management, and software and patch installations, replacing the need for bastion hosts, SSH, or remote PowerShell
-  * Patch Manager - helps you select and deploy operating system and software patches automatically across large groups of Amazon EC2 or on-premises instances
-  * Automation - allows you to safely automate common and repetitive IT operations and management tasks across AWS resources
-  * Configuration Compliance - lets you scan your managed instances for patch compliance and configuration inconsistencies
-  * Inventory - collects information about your instances and the software installed on them, helping you to understand your system configurations and installed applications
-  * State Manager - provides configuration management, which helps you maintain consistent configuration of your Amazon EC2 or on-premises instances. With Systems Manager, you can control configuration details such as server configurations, anti-virus definitions, firewall settings, and more. You can define configuration policies for your servers through the AWS Management Console or use existing scripts, PowerShell modules, or Ansible playbooks directly from GitHub or Amazon S3 buckets
-  * Parameter Store - provides secure, hierarchical storage for configuration data management and secrets management. You can store data such as passwords, database strings, and license codes as parameter values. You can store values as plain text or encrypted data. You can then reference values by using the unique name that you specified when you created the parameter
-  * Distributor - enables you to securely store and distribute software packages in your organization
-  * OpsCenter - provides a central location where operations engineers, IT professionals, and others can view, investigate, and resolve operational issues related to their environment
-  * Maintenance Windows - lets you schedule windows of time to run administrative and maintenance tasks across your instances
+  * **Session Manager** - **Browser based shell** without the need to open inbound ports, maintain bastion hosts, and manage SSH keys
+  * **Run Command** - Provides a simple way of **automating common administrative tasks** across groups of instances such as registry edits, user management, and software and patch installations, replacing the need for bastion hosts, SSH, or remote PowerShell
+  * **Patch Manager** - helps you select and deploy operating system and software patches automatically across large groups of Amazon EC2 or on-premises instances
+  * **Automation** - allows you to safely automate common and repetitive IT operations and management tasks across AWS resources
+  * **Configuration Compliance** - lets you scan your managed instances for patch compliance and configuration inconsistencies
+  * **Inventory** - collects information about your instances and the software installed on them, helping you to understand your system configurations and installed applications
+  * **State Manager** - provides configuration management, which helps you maintain consistent configuration of your Amazon EC2 or on-premises instances. With Systems Manager, you can control configuration details such as server configurations, anti-virus definitions, firewall settings, and more. You can define configuration policies for your servers through the AWS Management Console or use existing scripts, PowerShell modules, or Ansible playbooks directly from GitHub or Amazon S3 buckets
+  * **Parameter Store** - provides secure, hierarchical storage for configuration data management and secrets management. You can store data such as passwords, database strings, and license codes as parameter values. You can store values as plain text or encrypted data. You can then reference values by using the unique name that you specified when you created the parameter
+  * **Distributor** - enables you to securely store and distribute software packages in your organization
+  * **OpsCenter** - provides a central location where operations engineers, IT professionals, and others can view, investigate, and resolve operational issues related to their environment
+  * **Maintenance Windows** - lets you schedule windows of time to run administrative and maintenance tasks across your instances
+* In order to manage EC2 instances in a private subnet
 
 
 ## Resource Access Manager
 
 [TOC](#table-of-content)
 
-* AWS Resource Access Manager (AWS RAM) enables you to share your resources with any AWS account or organization in AWS Organizations. Customers who operate multiple accounts can create resources centrally and use AWS RAM to share them with all of their accounts to reduce operational overhead. AWS RAM is available at no additional charge
+* AWS Resource Access Manager (**AWS RAM**) enables you to **share your resources with any AWS account** or organization in AWS Organizations. Customers who operate multiple accounts can create resources centrally and use AWS RAM to share them with all of their accounts to reduce operational overhead. AWS RAM is available at no additional charge
 
 
 ## Secrets Manager
@@ -1559,9 +1573,86 @@ Services encrypted by default | Glacier, Storage Gateway, CloudTrail
 
 [TOC](#table-of-content)
 
-* **Accessing a service from a different region without going through internet** - 
+* **Accessing a custom service from a different region without going through internet** - 
   * Use a inter-region VPC peering to connect the two provider VPC in different regions
   * Use a Network Load Balancer in the secondary provider VPC to connect to the primary VPC service over VPC peering
 
   ![Image of inter-Region solution for VPC Endpoint](inter-region-peering-provider-side.png)
+
+* **Creating a highly available webpage with VPC, ELB, ASG, VPC Endpoint, CloudFront, Systems Manager**
+
+  * Create a VPC in `na-east-1` region with CIDR `10.0.0.0/16`
+  * Create a public subnet (CIDR - `10.0.1.0/24` & `10.0.2.0/24`) in each of the AZ `na-east-1a` and `na-east-1b`. The public subnets will contain only the NAT Gateways and the Application Load Balancer.
+    * Create a internet gateway
+    * Add a route in the main route table to the internet gateway for traffic to 0.0.0.0/0
+  * Create a private subnet (CIDR - `10.0.3.0/24` & `10.0.4.0/24`) in each of the AZ `na-east-1a` and `na-east-1b`. The private subnets will contain the EC2 instances hosting the Apache web servers.
+    * Create a NAT gateway in each of the two public subnets
+    * Associate an Elastic IP to each NAT gateway
+    * Create a custom route table for each private subnets
+    * Associate the appropriate private subnet with the custom route tables
+    * Add a route in each custom route table to the appropriate NAT gateway for traffic to 0.0.0.0/0
+    * Create a custom NACL
+    * Add both the private subnets to the custom NACL
+    * Refer to the NACL configuration below
+  * Create a VPC endpoint for each of the services `com.amazonaws.region.ssm` and `com.amazonaws.region.ec2messages` in the private subnets. These are required to enable the SSM (Systems Manager) agent in the EC2 instances to communicate with the Systems Manager over Amazon internal network
+  * Create a few security groups -
+    * For ALB - Allow inbound traffic to port `80` from `0.0.0.0/0`
+    * For Auto Scaling Group - Allow inbound traffic to port `80` from ALB security group
+    * For VPC Endpoint - Allow inbound traffic for `HTTPS`, port `443` from `10.0.0.0/16`
+  * Create a few IAM roles -
+    * For EC2 - Add policy `AmazonSSMManagedInstanceCore` to allow the SSM agent communicate with the Systems Manager
+  * Create a Target Group with port `80`
+  * Create an ALB
+    * Associate the appropriate security group created earlier
+    * Associate the target group created earlier
+    * Add a listener with port `80`
+    * Associate the two public subnets created earlier
+  * Create an ASG launch configuration 
+    * Add the AMI Amazon Linux 2
+    * Associate the appropriate IAM role created earlier
+    * Associate appropriate security group created earlier
+    * Add user data to deploy Apache Httpd with an HTML. Refer to the user data given below
+  * Create an Auto Scale Group
+    * Add the launch configuration created earlier
+    * Add the private subnets created earlier
+    * Add the target group created earlier
+    * Ensure that the Health Check Type is set to ELB
+  * Create an S3 bucket to store images to be displayed in the web page
+  * Create a CloudFront Distribution
+    * Add the ELB as default origin to serve HTML
+    * Add the S3 bucket as an origin to serve images 
+    * Create an Origin Access Identity (OAI)
+    * Add a caching behavior for the S3 bucket with the OAI created earlier and update the S3 bucket policy to allow access to OAI
+  * NACL Configuration
+    * Inbound Rules
+
+    Port | Source | Remarks
+    -----|--------|--------
+    HTTP (80) | 10.0.0.0/16 | HTTP traffic to come from ALB in the public subnets of the VPC
+    Custom TCP (1024 - 65535) | 0.0.0.0/0 | Return traffic from the internet on the ephemeral ports
+
+    * Outbound Rules
+
+    Port | Destination | Remarks
+    -----|-------------|--------
+    HTTP (80) | 0.0.0.0/0 | HTTP traffic to the NAT gateway for internet download
+    HTTPS (443) | 0.0.0.0/0 | HTTPS traffic to the NAT gateway for internet download & Systems Manager
+    Custom TCP (1024 - 65535) | 10.0.0.0/16 | Return traffic to the ELB
+
+  * EC2 User Data - 
+  
+    ```
+    #!/bin/bash
+    yum update -y
+    yum install httpd -y
+    yum install awslogs -y
+    service httpd start
+    systemctl enable httpd
+    chkconfig httpd on
+    service awslogsd start
+    systemctl enable awslogsd
+    chkconfig awslogsd on
+    cd /var/www/html
+    echo "<html><h1>Hello AWS Study - Welcome To My Webpage</h1><body><img src='myimg.jpg'></body></html>" > index.html
+    ```
 
