@@ -1045,7 +1045,13 @@
 * Subnet doesn't span across **AZ**
 * Inter AZ data transfer is chargeable
 * You are initially limited to launching 20 Amazon EC2 instances per Region at any one time and a maximum VPC size of /16 (65,536 IPs)
-* An instance launched in a VPC using an Amazon EBS-backed AMI maintains the same IP address when stopped and restarted
+* Max CIDR per VPC - 5 (Soft limit)
+* Max VPC size - /16 - 65536 IP
+* Min VPC size - /28 - 16 IP
+* Max 5 VPC per region (Soft limit)
+* One VPC can be attached to only one Internet Gateway and vice versa
+* Internet gateway is also a NAT for EC2 istances with a public IP
+* A subnet can be configured to automatically assign a public IP to the launched instances
 * **Security Groups** doesn't span across VPC
 * A VPC can have only 1 **internet Gateway**
 * Amazon reserves 5 **IP** in each subnet - 4 at the begining & 1 at the end
