@@ -478,7 +478,7 @@
 * Allows to do analytics directly on **S3**
 * Supports **data formats** CSV, JSON, ORC, Avro, Parquet
 * Uses **SQL** to query the files
-* **Good for** analyzing VPC Flow Logs, ELB Logs etc.
+* **Good for** analyzing VPC Flow Logs, ELB Logs etc. at scale by creating a table and linking it with the S3 bucket holding the logs
 
 
 ## IAM
@@ -492,7 +492,7 @@
 * You can create an identity broker that sits between your corporate users and your AWS resources to manage the authentication and authorization process without needing to recreate all your users as IAM users in AWS. The identity broker application has permissions to access the **AWS Security Token Service (STS)** to request temporary security credentials
 * **Login to EC2** operating system can be done using:
   * Assymmetric key pair
-  * Local operating users
+  * Local operating system users
   * Active Directory
   * Session Manager of AWS Systems Manager
 * Two **types of policies**
@@ -760,6 +760,14 @@
   * gp2 - 16,000 (based on 16K I/O size)
   * st1 - 500 (based on 1 MB I/O size)
   * sc1 - 250 (based on 1 MB I/O size)
+* **IOPS/GiB**
+  * io1
+    * You can provision up to 50 IOPS per GiB
+    * Min 100 IOPS
+  * gp2
+    * Baseline performance is 3 IOPS per GiB
+    * Minimum of 100 IOPS
+    * General Purpose (SSD) volumes under 1000 GiB can burst up to 3000 IOPS
 * SSD is good for short random access. HDD is good for heavy sequential access
 * SSD provides high IOPS (np. of read-write per second). HDD provides high throughput (no. of bits read/written per second)
 * The size and IOPS (**only for IO1**) can be increased
@@ -796,7 +804,10 @@
   * EBS Backed Volumes
 * **Instance store** volumes are created from a template stored in Amazon S3
 * **Instance stores** are attached to the host where the EC2 is running, whereas EBS volumes are network volumes. However, in 90% of the use cases the difference in latency with the two types of stores does not make any difference
-* Throughput = IOPS * I/O size. The I/O size is 256KB (earlier 16KB). If the IOPS provisioned is 500, the instance can achieve 500 * 256KB writes per second
+* gp2 Throughput (in MiB/sec) = (Volume size in GiB) * (IOPS per GiB) * (I/O size in KiB). The I/O size is 256KiB (earlier 16KiB). 
+* gp2 - Max Throughput 250 MiB/sec (volumes >= 334 GiB won't increase throughput)
+* io1 Throughput (in MiB/sec) = (IOPS per GiB) * (I/O size in KiB). If the IOPS provisioned is 500, the instance can achieve 500 * 256KiB writes per second
+* io1 - Max Throughput 500 MiB/sec (at 32,000 IOPS) and 1000 MiB/sec (at 64,000 IOPS)
 * EBS Optimized Instances - With small additional fee, customers can launch certain Amazon EC2 instance types as EBS-optimized instances. EBS-optimized instances enable EC2 instances to fully use the IOPS provisioned on an EBS volume. Contention between Amazon EBS I/O and other traffic from the EC2 instance is minimized
 * Amazon Data Lifecycle Manager (Amazon DLM) automates the creation, deletion and retention of EBS snapshots
 * Improving I/O performance
@@ -1104,22 +1115,36 @@
 * A **Bastion host** is a special purpose computer specially designed to withstand attacks. The computer usually hosts a single application, e.g. a proxy server, and all other services are removed or limited to reduce the threat to the computer. It is hardened in this manner primarily due to its location and purpose which is either on the outside of a firewall or in a demelitarized zone (DMZ) and usually involves access from untrusted networks or computers
 * A **NAT** Gateway is used to provide internet traffic to the private subnet
 * A **Bastion host** is used to administer the EC2 instances in the private subnet using SSH or RDP 
+* Traditionally, multiple users can connect to a **Bastion host** either by sharing a key pair, or by adding the private keys of each user in the authorized keys of the bastion host. A more secured way is to avoid key pairs and use EC2 Instance Connect which will allow the users connect to the bastion host based on IAM policies attached to their IAM users or roles
 * **AWS Direct Connect** provides reliable, high throughput, dedicated and secure connection from the local data center to the AWS
 * A Corporare network can be connected to a VPC using a VPN over the internet or a VPN over **AWS Direct Connect**. VPN over Direct Connect is significantly more expensive than over internet
-* Using **AWS Direct Connect**, a dedicated network connection between the AWS VPC and corporate network can be established
-* **VPC endpoints** allow the VPC to privately connect to the supported AWS services without leaving the AWS network. The instances in the VPC do not require public IP. Two types of VPC Endpoints - 
+* Using **AWS Direct Connect**, a dedicated private network connection between the AWS VPC and corporate network can be established
+* **AWS Direct Connect** use cases
+  * Increased bandwidth throughput 
+  * Consistent connection
+* **AWS Direct Connect** requires physical connection established between the corporate network and the AWS Direct Connect Location
+* **AWS Direct Connect** can be setup to connect to multiple VPCs (even in different region) in the same account by using a AWS Direct Connect Gateway. However, for the VPCs to talk to each other a VPC Peering connection is required
+* **VPC endpoints** allow the VPC to privately connect to the supported AWS services without leaving the AWS network. The instances in the VPC do not require public IP * Two types of VPC Endpoints - 
   * **Interface Endpoints** - An elastic network interface with a private IP address that serves as an entrypoint for traffic destined to a supported service
   * **Gateway Endpoints** - Only for S3 and DynamoDB
 * **Interface endpoints** are powered by AWS PrivateLink - doesn't require public IP
 * **VPC Endpoints** support only IPv4 traffic
 * **VPC Endpoints** = The service and the VPC must be in the same region
 * Currently, no CloudWatch metric is available for the interface-based **VPC endpoint**
+* With Gateway **VPC Endpoint**, you must enable DNS resolution in your VPC
+* With Interface **VPC Endpoint**, 
+  * The instances can connect to the AWS service using endpoint specific DNS name, if private DNS is not enabled
+  * The instances can also connect to the AWS services using the default DNS name, if private DNS is enabled
+  * To use private DNS, DNS hostname and DNS support must be enabled in VPC
+  * Enabling DNS hostname and DNS support gives public DNS names to EC2 instances that have public IP or Elastic IP addresses
 * **VPC Peering** can connect to VPC in same account or different account, in same region or different region
 * **VPC Peering** does not need Internet Gateway
 * **VPC Peering** traffic withing region is not encrypted, but across region is AEAD encrypted
 * By default, a query for a public hostname of an instance in a peered VPC in a different region will resolve to a public IP address. Route 53 private DNS can be used to resolve to a private IP address with Inter-Region **VPC Peering**
 * Inter-Region **VPC Peering** doesn't support IPv6
 * Services that cannot be used over **VPC Peering** - EFS, Network Load Balancer, AWS PrivateLink
+* **VPC Peering** connection does not support edge to edge routing or transitive routing
+* **VPC Peering** needs route table configuration
 * On creation of a VPC, a default route table, NACL and security group are automatically created. Subnets and Internet Gateways are not automatically created
 * US-East-1A in one AWS account can be completely different from US-East-1A in another AWS account
 * **Traffic Flow** - 
@@ -1130,7 +1155,6 @@
   * The **public subnets** should be associated with a custom route table that should have a route that will allow destination to everywhere (0.0.0.0/0) through the internet gateway
 * **Private subnets** should be associated with a custom NACL that allows traffic to and from the public subnets (atleast SSH & ICMP) and internet (for NAT Gateway to work)
 * **Private subnet** should be associated with a route table that route all internet traffic (0.0.0.0/0) to the NAT Gateway
-* VPC **peering** connection does not support edge to edge routing or transitive routing
 * **ENI** - ENI (Elastic Network Interface) is attached to a subnet of VPC and cannot be used across Availability Zone or VPC
 * **ENI** - ENI has IP, source & destination check flag, MAC address and security groups attached
 * **ENI** - All EC2 instances have a primary ENI. Additional ENIs can be 
@@ -1153,6 +1177,7 @@
 * **Security Groups** are applied at the instance level, whereas NACLs are at the subnet level
 * When you add an Internet gateway, an egress-only Internet gateway, a virtual private gateway, a NAT device, a peering connection, or a VPC endpoint in your VPC, you must update the **route table** for any subnet that uses these gateways or connections
 * A Site-to-Site **VPN connection** consists of a virtual private gateway attached to your VPC and a customer gateway located in your data center
+* The IP address of the customer gateway is either is either an internet routable public IP or the NAT public IP of the corporate network
 * An **egress-only Internet gateway** is for use with IPv6 traffic only. It allows outbound communication over IPv6 from instances in a VPC to the Internet, and prevents the Internet from initiating an IPv6 connection with the instances (Similar to NAT Gateway for IPv4)
 * The **Internet Gateway** works with both IPv6 and IPV4 and it does Network Address Translation (NAT) between the public IP and the private subnet IP for the instances while communicating with the resources in the internet
 * **Ephemeral ports** - Clients receives response to server requests on random ports in the range 1024-65535 (ephemeral ports). Security groups don't need to handle ephemeral ports as security groups are stateful, outbound traffic to allowed inbound traffic is always allowed. However, NACL needs to add proper entries for ephemeral ports
@@ -1174,6 +1199,9 @@
 * Traffic between two EC2 instances in the same AWS Region stays within the AWS network, even when it goes over public IP addresses
 * Traffic between EC2 instances in different AWS Regions stays within the AWS network, if there is an Inter-Region VPC Peering connection between the VPCs where the two instances reside
 * You may use a third-party software VPN to create a site to site or remote access VPN connection with your VPC via the Internet gateway
+* Analyzing VPC Flow logs
+  * For inbound traffic, if inbound is ACCEPT, but outbound is REJECT, it is only an NACL problem
+  * For outbound traffic, if outbound is ACCEPT, but inbound is REJECT, it is only an NACL problem
 
 
 ## SQS
@@ -1373,8 +1401,7 @@
   * **Parameter Store** - provides secure, hierarchical storage for configuration data management and secrets management. You can store data such as passwords, database strings, and license codes as parameter values. You can store values as plain text or encrypted data. You can then reference values by using the unique name that you specified when you created the parameter
   * **Distributor** - enables you to securely store and distribute software packages in your organization
   * **OpsCenter** - provides a central location where operations engineers, IT professionals, and others can view, investigate, and resolve operational issues related to their environment
-  * **Maintenance Windows** - lets you schedule windows of time to run administrative and maintenance tasks across your instances
-* In order to manage EC2 instances in a private subnet
+  * **Maintenance Windows** - lets you schedule windows of time to run administrative and maintenance tasks across your instances in order to manage EC2 instances in a private subnet
 
 
 ## Resource Access Manager
@@ -1544,6 +1571,7 @@ Automatic load balancing, auto scaling etc. | AWS Elastic Beanstalk
 KMS Custom Key Store | CloudHSM
 Single tenant key access | CloudHSM
 Services encrypted by default | Glacier, Storage Gateway, CloudTrail
+AWS CLI Not able to connect | Make sure the region is correctly specified
 
 
 ## Serverless Services
