@@ -29,6 +29,8 @@
 
 [AWS Lambda](#lambda)
 
+[AWS Elastic Beanstalk](#elastic-beanstalk)
+
 
 #### Networking & Content Delivery
 
@@ -171,7 +173,7 @@
 * Amazon **guarantees availability** -
   * 99.9% for S3 Standard
   * 99% for S3 - IA 
-  * S3 One Zone - IA
+  * 99% for S3 One Zone - IA
 * Amazon **guarantees durability** of 99.999999999% (11 * 9's) for all storage classes
 * **Replicated** to >= 3 AZ (except S3 One Zone IA)
 * **S3 Standard** - Frequently accessed
@@ -326,7 +328,7 @@
   * 304 status code (Not Modified), if the cache has the latest version
   * 200 status code (OK) and the latest version of the file, if the cache doesn't have the latest version
 * By default, CloudFront doesn't automatically **compress** contents
-* To access the contents from **own domain**,, say www.example.com
+* To access the contents from **own domain**, say www.example.com
   * Add a CNAME in CloudFront for www.example.com
   * Add a CNAME in DNS to route traffic to the CloudFront for a query against www.example.com
 * Choose a **certificate** to use that covers the alternate domain name. The list of certificates can include any of the following:
@@ -781,7 +783,7 @@
 * You can share an encrypted **snapshot** only with specific AWS accounts. For others to use your shared, encrypted snapshot, you must also share the CMK key that was used to encrypt it
 * **Snapshots** of encrypted volumes are always encrypted
 * Volumes restored from encrypted **snapshots** are encrypted automatically
-* To take a **snapshot** of the root device, the instance needs to be stopped
+* To take a **snapshot** of the root device, the instance needs to be stopped or volume needs to be detached (it is not required but recommended)
 * Copying an unencrypted **snapshot** allows encryption
 * EBS **Encryption** leverages keys from KMS (AES-256)
 * All the data in flight moving between the instance and an encrypted volume is **encrypted**
@@ -804,6 +806,7 @@
   * EBS Backed Volumes
 * **Instance store** volumes are created from a template stored in Amazon S3
 * **Instance stores** are attached to the host where the EC2 is running, whereas EBS volumes are network volumes. However, in 90% of the use cases the difference in latency with the two types of stores does not make any difference
+* **Instance stores** survive reboot, but NOT termination
 * gp2 Throughput (in MiB/sec) = (Volume size in GiB) * (IOPS per GiB) * (I/O size in KiB). The I/O size is 256KiB (earlier 16KiB). 
 * gp2 - Max Throughput 250 MiB/sec (volumes >= 334 GiB won't increase throughput)
 * io1 Throughput (in MiB/sec) = (IOPS per GiB) * (I/O size in KiB). If the IOPS provisioned is 500, the instance can achieve 500 * 256KiB writes per second
@@ -825,6 +828,22 @@
 * When you have access to both an encrypted and unencrypted volume, you can freely transfer data between them. EC2 carries out the encryption and decryption operations transparently
 * To create snapshots for Amazon EBS volumes that are configured in a RAID array, there must be no data I/O to or from the EBS volumes that comprise the RAID array. These same precautions and steps should be followed whenever you create a snapshot of an EBS volume that serves as the root device for an EC2 instance
 * Although snapshots are incremental, snapshots are designed in such a way that retaining the last snapshot is sufficient to recover the complete volume data. Deleting the old snapshots may not reduce the occupied storage. Snapshots copy only the data that have changed since the last snapshot was taken and points to the unchanged data of the last snapshot
+* Volumes can be **resized**
+  * increase in size
+  * increase in IOPS (for io1)
+  * change in volume type
+* After **resizing**, the volume needs to be repartitioned
+* After **resizing**, the volume will remain in "optimization" phase for some time. While the volume will remai usable, but the performancce will not be good
+* EBS volumes restored from the snapshots need to be pre-warmed for optimal performance (fio or dd command will read the entire volume ad thus helps in pre-warming)
+* EBS Volume migration to a different region 
+  * Take a snapshot
+  * Copy snapshot to a different region
+  * Restore volume from the snapshot
+* EBS Volume migration to a different AZ 
+  * Take a snapshot
+  * Restore volume from the snapshot in a different AZ
+* High wait time of SSD can be resolved by provisioning more IOPS in io1
+
 
 ![Snapshot Deletion](snapshot_1b.png)
 
@@ -838,7 +857,7 @@
 
 * CloudWatch is for monitoring performance, whereas **CloudTrail** is for auditing API calls
 * CloudWatch with EC2 will monitor events every 5 min by default - **basic monitoring**
-* With **detailed monitoring**, the interval will be 1 min
+* With **detailed monitoring**, the interval will be 1 min. Use detailed monitoring for prompt scaling actions in ASG
 * CloudWatch alarms can be created to trigger notifications when a certain metric reaches a certain value
 * Enabling CloudWatch logs for **EC2**
   * Assign appropriate CloudWatch access policy to the IAM role
@@ -867,10 +886,19 @@
   * Status Check
     * Instance status - checks the EC2 VM
     * System status - checks the underlying hardware
-* For custom metrics
+* For custom metrics (API - PutMetricData)
   * Basic resolution - 1 min interval
   * High resolution - 1 sec interval
+* CloudWatch **dashboards** are global. Dashboards can include graphs from different regions
+* **Metric Filter** can be used to find a specific log message based on pattern and create a metric on the number of occurence of the message
+* Using AWS CLI, we can tail CloudWatch logs
+* You can use subscriptions to get access to a real-time feed of log events from CloudWatch Logs and have it delivered to other services such as a Amazon Kinesis stream, Amazon Kinesis Data Firehose stream, or AWS Lambda for custom processing, analysis, or loading to other systems. To begin subscribing to log events, create the receiving source, such as a Kinesis stream, where the events will be delivered. A subscription filter defines the filter pattern to use for filtering which log events get delivered to your AWS resource, as well as information about where to send matching log events to
+* CloudWatch logs can go to (one time batch)
+  * S3 for archival
+  * Stream to Elastic Search
+  * Stream to Lambda
 
+![Real Time Log Processing](splunk_kinesis2.png)
 
 ## CloudTrail
 
@@ -892,7 +920,7 @@
   * An optional list of template parameters (input values supplied at stack creation time)
   * An optional list of output values (e.g. the complete URL to a web application)
   * An optional list of data tables used to lookup static configuration values (e.g., AMI names)
-  * The list of AWS resources and their configuration values
+  * The list of AWS resources and their configuration values (mandatory)
   * A template file format version number
 
 
@@ -924,14 +952,34 @@
 
 [TOC](#table-of-content)
 
+* Databases supported - 
+  * Postgres
+  * Oracle
+  * MySQL
+  * MariaDB
+  * Microsoft SQL Server
+  * Aurora
 * Upto 5 **Read Replicas** (Async Replication - within AZ, cross AZ or cross Region)
 * **Read replicas** of read replicas are possible
 * Each **read replica** will have its own DNS endpoint
 * **Read replica** can be created in a separate region as well
 * If a **read replica** is promoted to its own database, the replication will stop
 * **Read replica** cannot be enabled unless the automatic backups are also enabled
+* Oracle does not support **Read replica**
 * **Read replicas** themselves can be **Multi-AZ*** for disaster recovery
+* **Read Replicas** can help in Disaster Recovery by cross-region read-replica
+* Each **Read Replica** will have its own read endpoint
+* **Read Replicas** can be used to run BI / Analytics reports
 * A failover in a **Multi-AZ** deployment can be forced by rebooting the DB
+* **Multi-AZ** cannot be cross-region
+* **Multi-AZ** happens in the following use cases
+  * Primary DB instance fails
+  * Availability zone outage
+  * DB instance server type changed
+  * DB instance OS undergoing software patching
+  * Manual failover using reboot with failover
+* With **Multi-AZ** there is less impact on primary for backup & maintenance as the backup happens from standby and maintenance patches are first applied on standby and then the standby is promoted to become the primary
+* Primary database and the **Multi-AZ** Standby will have a common DNS name
 * Two ways of improving performance
   * Read replicas
   * ElastiCache
@@ -945,9 +993,13 @@
 * The **backup** data is stored in S3
 * Backups are taken during specified window. The application may experience elavated latency during **backup**
 * Restoring DB from automatic **backup** or snapshots always creates a new RDS instance with a new DNS endpoint
-* DB Snapshots:
+* **DB Snapshots**:
   * Manually triggered by the user
   * Retention of backup for as long as we want
+  * Can be taken on the **Multi AZ** standby and thus minimizing impact on the master
+  * Incremental after the first which is full
+  * Can copy and share snapshots
+* Steps to encrypt unencrypted DB - Snapshot => copy snapshot as encrypted => create DB from snapshot
 * Encryption at rest capability with AWS KMS - AES-256 encryption
 * To enforce SSL:
   * PostgreSQL: rds.force_ssl=1 in the AWS RDS Console (Paratemer Groups)
@@ -957,7 +1009,26 @@
   * Provide SSL options when connecting to database
 * RDS, in general, is **not serverless** (except Aurora Serverless which is serverless)
 * We cannot access the RDS **virtual machines**. Patching the RDS operating system is Amazon's responsibility
+* **CloudWatch Metrics** (Gathered from the Hypervisor) - 
+  * DatabaseConnections
+  * SwapUsage
+  * ReadIOPS / WriteIOPS
+  * ReadLatency / WriteLatency
+  * ReadThroughPut / WriteThroughPut
+  * DiskQueueDepth
+  * FreeStorageSpace
 * **Enhanced Monitoring** metrics are useful when it is required to see how different processes or threads on a DB instance use the CPU
+* IAM users can be used to manage DB (only for MySQL/Aurora)
+* Key RDS APIs
+  * DescribeDBInstances - Lists DB instances including read replicas and also provides DB version
+  * CreateDBSnapshot
+  * DescribeEvents
+  * RebootDBInstance
+* RDS Performance Insights
+  * By Waits - find the resource that is bottleneck (CPU, IO, lock etc.)
+  * By SQL Statements - find the SQL statement that is problem
+  * By Hosts - find the server that is using the DB most
+  * By Users - find the user that is using the DB most
 
 
 ## DynamoDB
@@ -1002,6 +1073,7 @@
 * Aurora can have 15 **replicas** while MySQL has 5, and the replication process is faster (sub 10 ms replica lag)
 * 2 copies of data is maintained in each **AZ** with a minimum of 3 AZ
 * Compute resources can scale upto 32 vCPUs and 244 GB of memory
+* Aurora costs 20% more than RDS
 * Aurora can transparently handle the loss of 2 copies of data without affecting write availability and 3 copies of data without affecting read availability
 * **Backups** and snapshots does not impact database performance
 * Storage is self-healing. Disks and blocks are scanned for errors and repaired automatically
@@ -1376,12 +1448,37 @@
 * Lambda@Edge function can intercept the request and response at the CloudFront edge locations and modify the request and responses. Possible use cases include URL rewriting, modifying requests based on the client user-agent etc.
 
 
+## Elastic Beanstalk
+
+[TOC](#table-of-content)
+
+* Deployment options
+  * All at once (deploy all in one go) – 
+    * Fastest
+    * Downtime
+    * No additional instances
+  * Rolling 
+    * Update a few instances at a time (bucket), and then move onto the next bucket once the first bucket is healthy
+    * No downtime
+    * Running at lower capacity
+  * Rolling with additional batches
+    * Spins up new instances to move the batch (so that the old application is still available)
+    * Running at full capacity
+    * Additional cost due to additional instances (bucket size) running during deployment
+  * Immutable
+    * Spins up new instances in a new ASG, deploys version to these instances, and then swaps all the instances when everything is healthy
+    * Running at full capacity
+    * Additional cost due to additional instances (bucket size) running during deployment
+    * Quick Rollback in case of failure - terminate the new ASG
+  * Blue Green deployment is not supported out of box. It could be achieved by Swap URL to a new environment or by doing Route 53 configurations (optionally with weighted routing)
+
+
 ## Config
 
 [TOC](#table-of-content)
 
 * AWS Config is a fully managed service that provides you with an AWS resource inventory, configuration history, and configuration change notifications to enable security and governance
-* If configurations do not match the configured compliance rules, it can trigger notifications
+* If configurations do not match the configured compliance rules, it can trigger SNS notifications (Compliance monitoring)
 
 
 ## Systems Manager
