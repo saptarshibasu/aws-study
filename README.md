@@ -162,7 +162,7 @@
 
 * **Object** based storage (files)
 * Files can be from **0 Bytes & 5 TB**
-* Bucket web address: `https://s3-<AZ name>.amazonaws.com/<bucketname>` e.g. `https://s3-eu-west-1.amazonaws.com/myuniquename`
+* Bucket web address: `https://s3-<Region name>.amazonaws.com/<bucketname>` e.g. `https://s3-eu-west-1.amazonaws.com/myuniquename`
 * Bucket name has to be **unique** across all regions
 * **Read after write** consistency for PUTs of new objects
 * **Eventual** consistency for overwrite PUTs and DELETEs
@@ -277,7 +277,7 @@
 
 [TOC](#table-of-content)
 
-* **Retrieval Policy**
+* **Retrieval Options** (Different from retrieval policies)
   * Expedited (1 - 5 mins retrieval)
   * Standard (3 - 5 hours)
   * Bulk (5 - 12 hours)
@@ -289,9 +289,9 @@
   * **Lock Policy** - immutable - once set cannot be changed
     * WORM Policy - write once read many
     * Forbid deleting an archive if it is less than 1 year (configurable) = regulatory compliance
-    * Nultifactor authentication on file access
+    * Multifactor authentication on file access
 * Files retrieved from Glacier will be stored in **Reduced Redundancy Storage** class for a specified number of days
-* For faster retrieval from Glacier based on Retrieval Policy, **Capacity Units** may need to be purchased
+* For faster retrieval from Glacier based on Retrieval Options, **Capacity Units** may need to be purchased
 * Amazon S3 Glacier **automatically encrypts** data at rest using Advanced Encryption Standard (AES) 256-bit symmetric keys
 * Glacier **range retrieval** (byte range) is charged as per the volume of data retrieved
 * In a **single Glacier upload**, an archive of maximum 4GB (note 1GB less than S3) size can be uploaded
@@ -665,6 +665,7 @@
 * To use EFS
   * install **amazon-efs-utils**
   * **mount** the EFS at the appropriate location
+* A security group needs to be attached with EFS allowing NFS(2049) inbound traffic from the security groups of the connecting EC2 instances
 
 
 ## ELB
