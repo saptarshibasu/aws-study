@@ -286,6 +286,9 @@
   * You can't transition from the ONEZONE_IA storage class to the STANDARD_IA or INTELLIGENT_TIERING storage classes.
   * You can transition from the GLACIER storage class to the DEEP_ARCHIVE storage class only.
   * You can't transition from the DEEP_ARCHIVE storage class to any other storage class.
+* Other **restrictions** -
+  * From the STANDARD storage classes to STANDARD_IA or ONEZONE_IA - Objects must be stored at least 30 days in the current storage class
+  * From the STANDARD_IA storage class to ONEZONE_IA - Objects must be stored at least 30 days in the STANDARD_IA storage class
 * Glacier Deep Archive retrieval options:
   * Standard - default tier and lets you access any of your archived objects within 12 hours
   * Bulk - lets you retrieve large amounts, even petabytes of data inexpensively and typically completes within 48 hours
@@ -295,6 +298,7 @@
   * Amazon Redshift Spectrum - exabytes of unstructured data
 * S3 Same Region Replication (SRR)
 * S3 Batch Operations - Operations across multiple objects
+* Access logs are not automatically encrypted
 
 
 ## Glacier
@@ -334,6 +338,7 @@
   * Works with file format CSV, JSON, Parquet
   * Works with all 3 retrieval options - Expedited, Standard & Bulk
 * Glacier **inventory** (of available objects) is updated every 24 hours - no real time data
+* The archives cannot be uploaded from the S3 Glacier management console directly
 
 
 ## CloudFront
@@ -447,6 +452,7 @@
 * For **signed URLs** CloudFront checks if the URL has expired only at the begining of the download or play. If after the download or streaming starts the URL expires, the download or streaming will continue
 * **Geo restriction** applies to an entire web distribution. If you need to apply one restriction to part of your content and a different restriction (or no restriction) to another part of your content, you must either create separate CloudFront web distributions or use a third-party geolocation service
 * You can set up CloudFront with **origin failover** for scenarios that require high availability. To get started, create an origin group in which you designate a primary origin for CloudFront plus a second origin that CloudFront automatically switches to when the primary origin returns specific HTTP status code failure responses
+* Access logs are **not** automatically encrypted
 
 
 ## Snowball
@@ -558,7 +564,8 @@
   * **Dedicated instances** - no other customer will share the hardware, but instances from same AWS account can share hardware, no control on instance placement
   * **Dedicated hosts** - the entire server is reserved, provides more control on instance placement, more visibility into sockets and cores, good for "bring your own licenses (BYOL)", complicated regulatory needs - 3 years period reservation
 * **Billing** by second with a minimum of 60 seconds
-* **Spot Price** - If you terminate your instance, you pay for any partial hour used (as you do for On-Demand or Reserved Instances). However, you are not charged for any partial hour of usage if the Spot price goes above your maximum price and Amazon EC2 interrupts your Spot Instance
+* **Spot Price** - If your Spot instance is terminated or stopped by Amazon EC2 in the first instance hour, you will not be charged for that usage. However, if you terminate the instance yourself, you will be charged to the nearest second. If the Spot instance is terminated or stopped by Amazon EC2 in any subsequent hour, you will be charged for your usage to the nearest second. If you are running on Windows or Red Hat Enterprise Linux (RHEL) and you terminate the instance yourself, you will be charged for an entire hour
+* **Spot Price** - You will pay the price per instance-hour set at the beginning of each instance-hour for the entire hour, billed to the nearest second
 * T2/T3 are **burstable** instances. Spikes are handled using burst credits that are accumulated over time. If burst credits are all consumed, performance will suffer
 * **M instance types** are balanced
 * **Instance Type** 
@@ -679,6 +686,9 @@
   * Terminated - The instance will be terminated on receiving the shutdown signal
 * With **shutdown protection** turned on, the instnce cannot be terminated from the console until the shutdown protection is turned off
 * Even with **shutdown protection** on, if the instance has its shutdown behavior as terminated, the shutdown initiated from the OS will terminate the instance
+* AWS Support offers four support plans: Basic, Developer, Business, and Enterprise
+* Reserved instances (both standard & Convertible) can be Zonal (restricted to a single availability zone for capacity reservation) or Regional (having instance size and availability zone flexibility)
+* If your applications benefit from high packet-per-second performance and/or low latency networking, Enhanced Networking will provide significantly improved performance, consistence of performance and scalability. There is no additional fee for Enhanced Networking. To take advantage of Enhanced Networking you need to launch the appropriate AMI on a supported instance type in a VPC
 
 
 ## EFS
@@ -693,6 +703,16 @@
   * install **amazon-efs-utils**
   * **mount** the EFS at the appropriate location
 * A security group needs to be attached with EFS allowing NFS(2049) inbound traffic from the security groups of the connecting EC2 instances
+* To access EFS file systems from on-premises, you must have an AWS Direct Connect or AWS VPN connection between your on-premises datacenter and your Amazon VPC
+* Amazon EFS offers a Standard and an Infrequent Access storage class
+* Moving files to EFS IA starts by enabling EFS Lifecycle Management and choosing an age-off policy
+* EFS Standard is designed to provide single-digit latencies on average, and EFS IA is designed to provide double-digit latencies on average
+* Performance mode - 
+  * General Purpose - default. Appropriate for most file systems
+  * Max I/O - optimized for applications where tens, hundreds, or thousands of EC2 instances are accessing the file system
+* All file systems deliver a consistent baseline performance of 50 MB/s per TB of Standard class storage, all file systems (regardless of size) can burst to 100 MB/s, and file systems with more than 1TB of Standard class storage can burst to 100 MB/s per TB
+* Due to the distributed storage, it experiences higher latency than EBS
+* AWS DataSync is an online data transfer service that makes it faster and simpler to move data between on-premises storage and Amazon EFS
 
 
 ## ELB
@@ -725,6 +745,8 @@
 * Elastic Load Balancing captures the **access logs** and stores them in the Amazon S3 bucket (that you specify) as compressed and encrypted files
 * Each **access log** file is automatically encrypted before it is stored in your S3 bucket and decrypted when you access it
 * ALBs are **priced** per http request, Classic ELBs are priced by bandwidth consumption. Also ALBs are charged per routing rule. For a very high volume of small requests, ALBs can be much more expensive than an ELB
+* Access logs are automatically encrypted
+* Connection draining enables the load balancer to complete in-flight requests made to instances that are de-registering or unhealthy.
 
 
 ## Auto Scaling
@@ -778,6 +800,13 @@
   * **Cold HDD (SC1)** - Lowest cost HDD volume designed for **less frequently** accessed workloads. Good for file servers
   * **EBS Magnetic HDD (Standard)** - Previous generation HDD. For workloads where data is infrequently accessed
 * io1 can be provisioned from 100 IOPS up to 64,000 IOPS per volume on Nitro system instance families and up to 32,000 on other instance families. The maximum ratio of provisioned IOPS to requested volume size (in GiB) is 50:1. Therefore, with a 10 Gib volume, the maximum provisioned IOPS should be 500
+* The use of io1 is justified only when there is a requirement for sustained IOPS
+* st1 bursts up to 250 MB/s per TB, with a baseline throughput of 40 MB/s per TB and a maximum throughput of 500 MB/s per volume
+* st1 is good for MapReduce, Kafka, log processing, data warehouse, and ETL workloads
+* sc1 bursts up to 80 MB/s per TB, with a baseline throughput of 12 MB/s per TB and a maximum throughput of 250 MB/s per volume
+* When your workload consists of large, sequential I/Os, we recommend that you configure the read-ahead setting to 1 MiB
+* Some instance types can drive more I/O throughput than what you can provision for a single EBS volume. You can join multiple gp2, io1, st1, or sc1 volumes together in a RAID 0 configuration to use the available bandwidth for these instances
+* A factor that can impact your performance is if your application isn’t sending enough I/O requests. This can be monitored by looking at your volume’s queue depth. The queue depth is the number of pending I/O requests from your application to your volume. For maximum consistency, a Provisioned IOPS volume must maintain an average queue depth (rounded to the nearest whole number) of one for every 1000 provisioned IOPS in a minute. For example, for a volume provisioned with 3000 IOPS, the queue depth average must be 3. For more information about ensuring consistent performance of your volumes
 * **RAID 0**
   * Striping in multiple disk volumes
   * When I/O performance is more important than fault tolerance
@@ -807,6 +836,7 @@
 * **Snapshots** occupy only the size of data
 * **Snapshots** exist on S3
 * **Snapshots** are incremental
+* It is sufficient to keep only the latest **snapshot**
 * You can share your unencrypted **snapshots** with specific AWS accounts, or you can share them with the entire AWS community by making them public
 * You can share an encrypted **snapshot** only with specific AWS accounts. For others to use your shared, encrypted snapshot, you must also share the CMK key that was used to encrypt it
 * **Snapshots** of encrypted volumes are always encrypted
@@ -871,6 +901,7 @@
   * Take a snapshot
   * Restore volume from the snapshot in a different AZ
 * High wait time of SSD can be resolved by provisioning more IOPS in io1
+* You can stripe multiple volumes together to achieve up to 75,000 IOPS or 1,750 MiB/s when attached to larger EC2 instances. However, performance for st1 and sc1 scales linearly with volume size so there may not be as much of a benefit to stripe these volumes together
 
 
 ![Snapshot Deletion](snapshot_1b.png)
@@ -926,6 +957,7 @@
   * S3 for archival (one time batch)
   * Stream to Elastic Search
   * Stream to Lambda (Lambda provides blueprints for streaming log events to Splunk or other services)
+* Logs are **not** automatically encrypted. Need to be enabled at log group level
 
 ![Real Time Log Processing](splunk_kinesis2.png)
 
@@ -939,6 +971,7 @@
 * You can create up to five trails in an AWS region. A trail that applies to all regions exists in each region and is counted as one trail in each region
 * By default, CloudTrail log files are encrypted using S3 Server Side Encryption (SSE) and placed into your S3 bucket
 * CloudTrail integration with CloudWatch logs enables you to receive SNS notifications of account activity captured by CloudTrail. For example, you can create CloudWatch alarms to monitor API calls that create, modify and delete Security Groups and Network ACL’s
+* Logs are automatically encrypted
 
 
 ## CloudFormation
@@ -975,6 +1008,8 @@
 * **Geolocation Based Routing** - A separate A record for each IP. Each A record is mapped to a location and the routing happens to a specific server depending on which location the DNS query originated. Good for scenarios where different website will have different language labels based on location
 * **Multivalue Answer** - Simple routing with health checks of each IP
 * **Geoproximity** - Must use Route 53 Traffic Flow. Routes traffic based on geographic location of users and resources. This can be further influenced with biases
+* You configure active-active failover using any routing policy (or combination of routing policies) other than failover, and you configure active-passive failover using the failover routing policy
+* Amazon Route 53’s DNS services does NOT support DNSSEC at this time
 
 
 ## RDS
@@ -1070,6 +1105,12 @@
 * Supports both **Eventual Consistant** Reads (Default) & **Strongly Consistant** Reads
 * **Serverless** service
 * Amazon DynamoDB Accelerator (DAX) is a fully managed, highly available, in-memory cache that can reduce Amazon DynamoDB response times from milliseconds to microseconds
+* DynamoDB auto scaling modifies provisioned throughput settings only when the actual workload stays elevated (or depressed) for a sustained period of several minutes
+* To enable DynamoDB auto scaling for the ProductCatalog table, you create a scaling policy. This policy specifies the following:
+  * The table or global secondary index that you want to manage
+  * Which capacity type to manage (read capacity or write capacity)
+  * The upper and lower boundaries for the provisioned throughput settings
+  * Your target utilization
 
 
 ## Redshift
@@ -1591,6 +1632,7 @@
     * do not delete the old key as it will be used to decrypt old data
 * Encryption Algorithm - AES with 256 bit key in GCM mode
 * Generates a unique data key. This operation returns a plaintext copy of the data key and a copy that is encrypted under a customer master key (CMK) that you specify. You can use the plaintext key to encrypt your data outside of KMS and store the encrypted data key with the encrypted data
+* Use KMS for compliance with various security schemes
 
 
 ## Firewall Manager
