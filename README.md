@@ -167,13 +167,12 @@
 * **Read after write** consistency for PUTs of new objects
 * **Eventual** consistency for overwrite PUTs and DELETEs
 * **Designed for** -
-  * 99.99% availability for S3 Standard, 
-  * 99.9% for S3 - IA & 
+  * 99.99% availability for S3 Standard, Glacier, Glacier Deep Archive
+  * 99.9% for S3 - IA, Intelligent Tiering
   * 99.5% for S3 One Zone - IA
-* Amazon **guarantees availability** -
-  * 99.9% for S3 Standard
-  * 99% for S3 - IA 
-  * 99% for S3 One Zone - IA
+* Amazon **guarantees availability** (SLA) -
+  * 99.9% for S3 Standard, Glacier, Glacier Deep Archive
+  * 99% for S3 - IA, S3 One Zone - IA, Intelligent Tiering
 * Amazon **guarantees durability** of 99.999999999% (11 * 9's) for all storage classes
 * **Replicated** to >= 3 AZ (except S3 One Zone IA)
 * **S3 Standard** - Frequently accessed
@@ -185,6 +184,7 @@
 * **S3 Glacier Deep Archive** - Retrieval time of 12 hrs + Retrieval charge
 * **S3 Reduced Redundacy** - Deprecated. Sustains loss of data in a single facility
 * **Minimum storage period**
+  * Standard - NA
   * Intelligent Tiering - 30 days
   * Standard IA - 30 days
   * One Zone IA - 30 days
@@ -207,7 +207,7 @@
 * **Cross Region Replication** can replicate to buckets in different account
 * **Transfer Acceleration** for reduced upload time
 * **Transfer Acceleration** takes advantage of CloudFront's globally distributed edge locations and then routes data to the S3 bucket through Amazon's internal backbone network
-* The **bucket access logs** can be stored in another bucket which must be owned by the same AWS account in the same region
+* The **bucket access logs** can be stored in another bucket which must be owned by the same AWS account in the same region. For user information CloudTrail Data Events need to be configured
 * Enabling **logging** on a bucket from the management console also updates the ACL on the target bucket to grant write permission to the Log Delivery group
 * **Encryption at Rest** - 
   * SSE-S3 (Amazon manages key)
@@ -225,6 +225,7 @@
   * More control on rotation of key
   * Audit trail on how the key is used
   * Must set header - **`"x-amz-server-side-encryption":"aws:kms"`**
+  * Prefer SSE-KMS over SSE-S3 to comply with PCI-DSS, HIPAA/HITECH, and FedRAMP industry requirements
 * **SSE-C**
   * Server side encryption
   * Key managed by customer outside AWS
@@ -235,7 +236,6 @@
   * Clients encrypt / decrypt data
 * When **encryption** is enabled on an existing file, a new version will be created (provided versioning is enabled)
 * Prefer default **encryption** settings over S3 bucket policies to encrypt objects at rest
-* There can be at most 10 tags associated with an object
 * S3 **Bucket Policy** can be used to enforce upload of only encrypted objects. The policy will deny any PUT request that does not have the appropriate header `x-amz-server-side-encryption`
 * S3 **Bucket Policy** can be used to provide public read access to all files in the bucket instead of providing public access to each individual file
 * S3 evaluates and applies **bucket policies** before applying bucket encryption settings. Even if bucket encryption settings is enabled, PUT requests without encryption information will be rejected if there are bucket policies to reject such PUT requests
@@ -259,24 +259,49 @@
 * S3 static website URL: `<bucket-name>.s3-website-<aws-region>.amazonaws.com` or `<bucket-name>.s3-website.<aws-region>.amazonaws.com`
 * **Pre-signed URL** allows users to get temporary access to buckets and objects
 * **S3 Inventory** allows producing reports about S3 objects daily or weekly in a different S3 bucket
-* **S3 Inventory** reports format can be specified and the data can be queried using [Athena](#athena)
+* **S3 Inventory** reports format can be specified and the data can be queried using Athena
 * **Storage class** needs to be specified during object upload
 * **S3 Analytics**, when enabled, generates reports in a different S3 bucket to give insights about the object usage and this can be used to recommend when the object should be moved from one storage class to another
-* Earlier S3 **performance** would start degrading with 100 TPS
-* Historically the recommended approach is to have **random 4 characters** in front of the key name for better distribution of objects across partitions
-* To host a **static website**, the S3 bucket must have the same name as the domain or subdomain
+* To host a **static website**, the S3 bucket must have the same name as the domain (`example.com`) or subdomain (`www.example.com`). `www.example.com` bucket can redirect to `example.com` bucket
 * S3 **notification** feature enables the user to receive notifications when certain events happen in a bucket. S3 supports following destinations
   * Amazon SNS
   * Amazon SQS
   * AWS Lambda
 * Supports at least 3,500 **requests per second** to add data and 5,500 requests per second to retrieve
-* **Server access logging** provides detailed records for the requests that are made to a bucket
+* Amazon S3 **Object Lock** blocks deletion of an object for the duration of a specified retention period (WORM)
+* **Object Lock** mode - Governance mode (allows deletion by user with appropriate IAM permissions), Compliance mode (even root account cannot delet)
+* **Object Lock** - Legal Hold creates Object Lock for an indefinite period until explicitly removed
+* Amazon S3 uses a combination of Content-MD5 checksums and cyclic redundancy checks (CRCs) to detect data corruption
+* Objects uploaded or transitioned to S3 Intelligent-Tiering are automatically stored in the frequent access tier. S3 Intelligent-Tiering works by monitoring access patterns and then moving the objects that have not been accessed in 30 consecutive days to the infrequent access tier. If the objects are accessed later, S3 Intelligent-Tiering moves the object back to the frequent access tier
+* Amazon S3 supports the following **lifecycle transitions** between storage classes using a lifecycle configuration:
+  * You can transition from the STANDARD storage class to any other storage class.
+  * You can transition from any storage class to the GLACIER or DEEP_ARCHIVE storage classes.
+  * You can transition from the STANDARD_IA storage class to the INTELLIGENT_TIERING or ONEZONE_IA storage classes.
+  * You can transition from the INTELLIGENT_TIERING storage class to the ONEZONE_IA storage class.
+  * You can transition from the GLACIER storage class to the DEEP_ARCHIVE storage class.
+* The following **lifecycle transitions** are not supported:
+  * You can't transition from any storage class to the STANDARD storage class.
+  * You can't transition from any storage class to the REDUCED_REDUNDANCY storage class.
+  * You can't transition from the INTELLIGENT_TIERING storage class to the STANDARD_IA storage class.
+  * You can't transition from the ONEZONE_IA storage class to the STANDARD_IA or INTELLIGENT_TIERING storage classes.
+  * You can transition from the GLACIER storage class to the DEEP_ARCHIVE storage class only.
+  * You can't transition from the DEEP_ARCHIVE storage class to any other storage class.
+* Glacier Deep Archive retrieval options:
+  * Standard - default tier and lets you access any of your archived objects within 12 hours
+  * Bulk - lets you retrieve large amounts, even petabytes of data inexpensively and typically completes within 48 hours
+* S3 Query in-place options - 
+  * S3 Select - Simple query
+  * Amazon Athena - complex joins, window functions
+  * Amazon Redshift Spectrum - exabytes of unstructured data
+* S3 Same Region Replication (SRR)
+* S3 Batch Operations - Operations across multiple objects
 
 
 ## Glacier
 
 [TOC](#table-of-content)
 
+* Archive size from 1B to 40TB
 * **Retrieval Options** (Different from retrieval policies)
   * Expedited (1 - 5 mins retrieval)
   * Standard (3 - 5 hours)
@@ -284,13 +309,14 @@
 * Object (in S3) == **archive** (in Glacier)
 * Bucket (in S3) == **vault** (in Glacier)
 * Archive files can be upto 40 TB (note more than S3)
+* An archive can represent a single file or you may choose to combine several files to be uploaded as a single archive
 * Each vault has ONE vault policy & ONE lock policy
   * **Vault Policy** - similar to S3 bucket policy - restricts user access
   * **Lock Policy** - immutable - once set cannot be changed
     * WORM Policy - write once read many
     * Forbid deleting an archive if it is less than 1 year (configurable) = regulatory compliance
     * Multifactor authentication on file access
-* Files retrieved from Glacier will be stored in **Reduced Redundancy Storage** class for a specified number of days
+* Files retrieved from Glacier will be stored in **Reduced Redundancy Storage** or **S3 Standard IA** class for a specified number of days
 * For faster retrieval from Glacier based on Retrieval Options, **Capacity Units** may need to be purchased
 * Amazon S3 Glacier **automatically encrypts** data at rest using Advanced Encryption Standard (AES) 256-bit symmetric keys
 * Glacier **range retrieval** (byte range) is charged as per the volume of data retrieved
@@ -521,7 +547,7 @@
 * **Security groups** cannot blacklist an IP or port. Everything is blocked by default, we need to specifically open ports
 * **Elastic IP** gives a fixed public IP to an EC2 instance across restarts
 * One AWS account can have 5 **elastic IP** (soft limit)
-* Prefer load balancer over **Elastic IP**
+* Prefer load balancer over **Elastic IP** for high availability
 * EC2 **User Data** script runs once (with root privileges) at the instance first start
 * EC2 Launch types - 
   * **On-demand instances** - short workload, predictable pricing
@@ -530,22 +556,29 @@
   * **Scheduled reserved instances** - reserved for specific time window
   * **Spot instances** - short workload, cheap, can lose instances, good for batch jobs, big data analytics etc. - upto 90% discount
   * **Dedicated instances** - no other customer will share the hardware, but instances from same AWS account can share hardware, no control on instance placement
-  * **Dedicated hosts** - the entire server is reserved, provides more control on instance placement, more visibility into sockets and cores, good for "bring your own licenses (BYOL)", complicated regulatory needs - 3 year period reservation
+  * **Dedicated hosts** - the entire server is reserved, provides more control on instance placement, more visibility into sockets and cores, good for "bring your own licenses (BYOL)", complicated regulatory needs - 3 years period reservation
 * **Billing** by second with a minimum of 60 seconds
 * **Spot Price** - If you terminate your instance, you pay for any partial hour used (as you do for On-Demand or Reserved Instances). However, you are not charged for any partial hour of usage if the Spot price goes above your maximum price and Amazon EC2 interrupts your Spot Instance
 * T2/T3 are **burstable** instances. Spikes are handled using burst credits that are accumulated over time. If burst credits are all consumed, performance will suffer
 * **M instance types** are balanced
+* **Instance Type** 
+  * R - More RAM (use cases - in-memory caches)
+  * C - More CPU (use cases - compute / databases)
+  * M - Medium (use cases - general / webapp)
+  * I - More I/O - instance storage (use cases - databases)
+  * G - More GPU - (use cases - video rendering / machine learning)
+  * T2/T3 - burstable instances (up to a capacity / unlimited)
 * `http://169.254.169.254/latest/user-data/` gives **user data** scripts
 * `http://169.254.169.254/latest/meta-data/` gives **meta data**
 * `http://169.254.169.254/latest/meta-data/public-ipv4/` gives **public IP**
 * `http://169.254.169.254/latest/meta-data/local-ipv4/` gives **local IP**
-* Two types of **placement groups**
+* Three types of **placement groups**
   * **Clustered Placement Group** - 
     * Grouping of instances within a single AZ, single rack
     * Use cases - recommended for applications that need low network latency and high network throughput
     * Only certain specific instance types can be launched in this placement group
     * cannot span multiple AZ
-  * **Partition** – 
+  * **Partitioned Placement Group** – 
     * spreads instances across logical partitions
     * use cases - large distributed and replicated workloads, such as Hadoop, Cassandra, and Kafka
     * each partition within a placement group has its own set of racks. Each rack has its own network and power source
@@ -566,16 +599,16 @@
 * You can move an existing instance to a **placement group**, move an instance from one placement group to another, or remove an instance from a placement group. Before you begin, the instance must be in the stopped state
 * **Instance store** backed EC2 instances can only be rebooted and terminated. They cannot be stopped unlike EBS-backed instances
 * With **instance store**, the entire image is downloaded from S3 before booting and hence the boot time is usually around 5 mins
-* **EBS-backed instances** once stopped, all data in any attached **instance store** will be deleted
 * With **EBS-backed instances**, only the part needed for booting is first downloaded from the EBS Snapshot and hence the boot time is shorter around 1 min
+* **EBS-backed instances** once stopped, all data in any attached **instance store** will be deleted
 * When an Amazon **EBS-backed instance** is stopped, you're not charged for instance usage; however, you're still charged for volume storage
 * **EC2-Classic** is the original version of EC2 where the elastic IP would get disassociated when the instance stopped
 * With **EC2-VPC**, the Elastic IP does not get disassociated when stopped
 * When EC2 instance is stopped, it may get moved to a **different underlying host**
 * EC2 **instance states that are billed**
   * running
-  * stopping (The instannce is preparing to hibernate - NOT when the instance is being stopped)
-  * terminated (for reserved instances only that are still in their contracted term)
+  * stopping (only when the instannce is preparing to hibernate - NOT when the instance is being stopped)
+  * terminated (only for reserved instances only that are still in their contracted term)
 * Select **Auto-assign Public IP** option so that the launched EC2 instance has a public IP from Amazon's public IP pool
 * A custom **AMI** can be created with pre-installed software packages, security patches etc. instead of writing user data scripts, so that the boot time is less during autoscaling
 * **AMIs** are built for a specific region, but can be copied across regions
@@ -598,7 +631,7 @@
 * When an instance is terminated, Amazon Elastic Compute Cloud (Amazon EC2) uses the value of the **DeleteOnTermination** attribute for each attached EBS volume to determine whether to preserve or delete the volume when the instance is terminated
 * By default, the **DeleteOnTermination** attribute for the root volume of an instance is set to true, but it is set to false for all other volume types
 * Using the console, you can change the **DeleteOnTermination** attribute when you launch an instance. To change this attribute for a running instance, you must use the command line
-* **Hypervisors** - Xen, Nitro
+* Underlying **Hypervisors** for EC2 - Xen, Nitro
 * You must stop your Amazon **EBS–backed instance** before you can change its instance type
 * While changing instance type, **instance store backed instances** must be migrated to the new instance
 * When you stop and start an instance, be aware of the following:
@@ -646,13 +679,7 @@
   * Terminated - The instance will be terminated on receiving the shutdown signal
 * With **shutdown protection** turned on, the instnce cannot be terminated from the console until the shutdown protection is turned off
 * Even with **shutdown protection** on, if the instance has its shutdown behavior as terminated, the shutdown initiated from the OS will terminate the instance
-* **Instance Type** 
-  * R - More RAM (use cases - in-memory caches)
-  * C - More CPU (use cases - compute / databases)
-  * M - Medium (use cases - general / webapp)
-  * I - More I/O - instance storage (use cases - databases)
-  * G - More GPU - (use cases - video rendering / machine learning)
-  * T2/T3 - burstable instances (up to a capacity / unlimited)
+
 
 ## EFS
 
@@ -713,17 +740,17 @@
 * If all subnets in different **availability zones** are selected, the ASG will distribute the instances across multiple AZ
 * During the configured warm up period the EC2 instance will not contribute to the **auto scaling metrics**
 * **Scaling out** is increasing the number of instances and **scaling up** is increasing the resources
-* The cooldown period helps to ensure that the Auto Scaling group doesn't launch or terminate additional instances before the previous scaling activity takes effect
-* The default cooldown period is 300 seconds
-* Cooldown period is applicable only for simple scaling policy
-* Launch Configuration specifies the properties of the launched EC2 instances such as AMI etc.
-* Launch configuration cannot be changed once created
-* Scaling Policy - 
-  * Target tracking scaling — Increase or decrease the current capacity of the group based on a target value for a specific metric. E.g. CPU Utilization or any other metric that will increase or decrease proportionally with the no. of instances
-  * Step scaling — Increase or decrease the current capacity of the group based on a set of scaling adjustments, known as step adjustments, that vary based on the size of the alarm breach. The configuration defines the desired number of instances for a range of value for the given metric. There could be multiple such steps defined
-  * Simple scaling — Increase or decrease the current capacity of the group based on a single scaling adjustment
+* The **cooldown period** helps to ensure that the Auto Scaling group doesn't launch or terminate additional instances before the previous scaling activity takes effect
+* The default **cooldown period** is 300 seconds
+* **Cooldown period** is applicable only for simple scaling policy
+* **Launch Configuration** specifies the properties of the launched EC2 instances such as AMI etc.
+* **Launch configuration** cannot be changed once created
+* **Scaling Policy** - 
+  * **Target tracking scaling** — Increase or decrease the current capacity of the group based on a target value for a specific metric. E.g. CPU Utilization or any other metric that will increase or decrease proportionally with the no. of instances
+  * **Step scaling** — Increase or decrease the current capacity of the group based on a set of scaling adjustments, known as step adjustments, that vary based on the size of the alarm breach. The configuration defines the desired number of instances for a range of value for the given metric. There could be multiple such steps defined
+  * **Simple scaling** — Increase or decrease the current capacity of the group based on a single scaling adjustment
 * When there are multiple policies in force at the same time, there's a chance that each policy could instruct the Auto Scaling group to scale out (or in) at the same time. When these situations occur, Amazon EC2 Auto Scaling chooses the policy that provides the largest capacity for both scale out and scale in
-* Default termination policy - 
+* Default **termination policy** - 
   * Determine which Availability Zone(s) have the most instances, and at least one instance that is not protected from scale in
   * Determine which instance to terminate so as to align the remaining instances to the allocation strategy for the On-Demand or Spot Instance that is terminating and your current selection of instance types
   * Determine whether any of the instances use the oldest launch template
@@ -731,10 +758,10 @@
   * Instances are closest to the next billing hour
 * You can launch and automatically scale a fleet of On-Demand Instances and Spot Instances within a single Auto Scaling group. In addition to receiving discounts for using Spot Instances, if you specify instance types for which you have matching Reserved Instances, your discounted rate of the regular On-Demand Instance pricing also applies. The only difference between On-Demand Instances and Reserved Instances is that you must purchase the Reserved Instances in advance. All of these factors combined help you to optimize your cost savings for Amazon EC2 instances, while making sure that you obtain the desired scale and performance for your application
 * You enhance availability by deploying your application across multiple instance types running in multiple Availability Zones. You must specify a minimum of two instance types, but it is a best practice to choose a few instance types to avoid trying to launch instances from instance pools with insufficient capacity. If the Auto Scaling group's request for Spot Instances cannot be fulfilled in one Spot Instance pool, it keeps trying in other Spot Instance pools rather than launching On-Demand Instances, so that you can leverage the cost savings of Spot Instances
-* Amazon EC2 Auto Scaling provides two types of allocation strategies that can be used for Spot Instances:
-  * capacity-optimized - The capacity-optimized strategy automatically launches Spot Instances into the most available pools by looking at real-time capacity data and predicting which are the most available. By offering the possibility of fewer interruptions, the capacity-optimized strategy can lower the overall cost of your workload
-  * lowest-price - Amazon EC2 Auto Scaling allocates your instances from the number (N) of Spot Instance pools that you specify and from the pools with the lowest price per unit at the time of fulfillment
-* An Auto Scaling group is associated with one launch configuration at a time, and you can't modify a launch configuration after you've created it. To change the launch configuration for an Auto Scaling group, use an existing launch configuration as the basis for a new launch configuration. Then, update the Auto Scaling group to use the new launch configuration. After you change the launch configuration for an Auto Scaling group, any new instances are launched using the new configuration options, but existing instances are not affected
+* Amazon EC2 Auto Scaling provides two types of **allocation strategies** that can be used for Spot Instances:
+  * **capacity-optimized** - The capacity-optimized strategy automatically launches Spot Instances into the most available pools by looking at real-time capacity data and predicting which are the most available. By offering the possibility of fewer interruptions, the capacity-optimized strategy can lower the overall cost of your workload
+  * **lowest-price** - Amazon EC2 Auto Scaling allocates your instances from the number (N) of Spot Instance pools that you specify and from the pools with the lowest price per unit at the time of fulfillment
+* An Auto Scaling group is associated with one launch configuration at a time, and you can't modify a **launch configuration** after you've created it. To change the launch configuration for an Auto Scaling group, use an existing launch configuration as the basis for a new launch configuration. Then, update the Auto Scaling group to use the new launch configuration. After you change the launch configuration for an Auto Scaling group, any new instances are launched using the new configuration options, but existing instances are not affected
 
 
 ## EBS
@@ -860,6 +887,7 @@
 * CloudWatch with EC2 will monitor events every 5 min by default - **basic monitoring**
 * With **detailed monitoring**, the interval will be 1 min. Use detailed monitoring for prompt scaling actions in ASG
 * CloudWatch alarms can be created to trigger notifications when a certain metric reaches a certain value
+* We can create a CloudWatch Events Rule That triggers on an AWS API Call Using AWS CloudTrail
 * Enabling CloudWatch logs for **EC2**
   * Assign appropriate CloudWatch access policy to the IAM role
   * Install CloudWatch agent (awslogsd) in EC2
@@ -894,10 +922,10 @@
 * **Metric Filter** can be used to find a specific log message based on pattern and create a metric on the number of occurence of the message
 * Using AWS CLI, we can tail CloudWatch logs
 * You can use subscriptions to get access to a real-time feed of log events from CloudWatch Logs and have it delivered to other services such as a Amazon Kinesis stream, Amazon Kinesis Data Firehose stream, or AWS Lambda for custom processing, analysis, or loading to other systems. To begin subscribing to log events, create the receiving source, such as a Kinesis stream, where the events will be delivered. A subscription filter defines the filter pattern to use for filtering which log events get delivered to your AWS resource, as well as information about where to send matching log events to
-* CloudWatch logs can go to (one time batch)
-  * S3 for archival
+* CloudWatch logs can go to
+  * S3 for archival (one time batch)
   * Stream to Elastic Search
-  * Stream to Lambda
+  * Stream to Lambda (Lambda provides blueprints for streaming log events to Splunk or other services)
 
 ![Real Time Log Processing](splunk_kinesis2.png)
 
@@ -944,7 +972,7 @@
 * **Wighted Routing** - A separate A record for each IP with a percentage weight. A separate health check can be associated with each IP or A record. SNS notification can be sent if a health check fails. If a health check fails, the server is removed from Route 53, until the health check passes
 * **Latency Based Routing** - A separate A record for each IP with a percentage weight. A separate health check can be associated with each IP or A record. Routing happens to the server with lowest latency
 * **Failover Routing** - 2 separate A records - one for primary and one for secondary. Health check can be associated with each, If primary goes down, traffic will all be ruted to secondary
-* **Geolocation Based Routing** - A separate A record for each IP. Each A record is mapped to a location and the routing happens to a specific server depending on which location the DNS query originated. Good for scenarios where different website will have different language laels based on location
+* **Geolocation Based Routing** - A separate A record for each IP. Each A record is mapped to a location and the routing happens to a specific server depending on which location the DNS query originated. Good for scenarios where different website will have different language labels based on location
 * **Multivalue Answer** - Simple routing with health checks of each IP
 * **Geoproximity** - Must use Route 53 Traffic Flow. Routes traffic based on geographic location of users and resources. This can be further influenced with biases
 
@@ -1150,7 +1178,7 @@
 * With **NAT** Gateway there is no need to disable source / destination checks
 * Create a **NAT** Gateway in each AZ and configure the route to use the NAT Gateway in the same AZ
 * Once a **NAT** Gateway is created, its elastic IP cannot be disassociated from it until the NAT gateway is deleted. Disassociation does not automatically return the eleastic IP
-* The NACL of the subnet applies to the **NAT** Gateway which uses ports 1024–65535
+* The NACL of the subnet applies to the **NAT** Gateway
 * A **NAT** gateway cannot send traffic over VPC endpoints, AWS Site-to-Site VPN connections, AWS Direct Connect, or VPC peering connections. If your instances in the private subnet must access resources over a VPC endpoint, a Site-to-Site VPN connection, or AWS Direct Connect, use the private subnet’s route table to route the traffic directly to these devices
 * To avoid data processing charges for **NAT** gateways when accessing Amazon S3 and DynamoDB that are in the same Region, set up a gateway endpoint and route the traffic through the gateway endpoint instead of the NAT gateway. There are no charges for using a gateway endpoint
 * **NAT** Gateway limit - 5 per AZ
@@ -1188,7 +1216,7 @@
 * A **Bastion host** is a special purpose computer specially designed to withstand attacks. The computer usually hosts a single application, e.g. a proxy server, and all other services are removed or limited to reduce the threat to the computer. It is hardened in this manner primarily due to its location and purpose which is either on the outside of a firewall or in a demelitarized zone (DMZ) and usually involves access from untrusted networks or computers
 * A **NAT** Gateway is used to provide internet traffic to the private subnet
 * A **Bastion host** is used to administer the EC2 instances in the private subnet using SSH or RDP 
-* Traditionally, multiple users can connect to a **Bastion host** either by sharing a key pair, or by adding the private keys of each user in the authorized keys of the bastion host. A more secured way is to avoid key pairs and use EC2 Instance Connect which will allow the users connect to the bastion host based on IAM policies attached to their IAM users or roles
+* Traditionally, multiple users can connect to a **Bastion host** either by sharing a key pair, or by adding the public keys of each user in the authorized keys of the bastion host. A more secured way is to avoid key pairs and use EC2 Instance Connect which will allow the users connect to the bastion host based on IAM policies attached to their IAM users or roles
 * **AWS Direct Connect** provides reliable, high throughput, dedicated and secure connection from the local data center to the AWS
 * A Corporare network can be connected to a VPC using a VPN over the internet or a VPN over **AWS Direct Connect**. VPN over Direct Connect is significantly more expensive than over internet
 * Using **AWS Direct Connect**, a dedicated private network connection between the AWS VPC and corporate network can be established
@@ -1202,7 +1230,7 @@
   * **Gateway Endpoints** - Only for S3 and DynamoDB
 * **Interface endpoints** are powered by AWS PrivateLink - doesn't require public IP
 * **VPC Endpoints** support only IPv4 traffic
-* **VPC Endpoints** = The service and the VPC must be in the same region
+* Gateway **VPC Endpoints** - The service and the VPC must be in the same region (AWS PrivateLink powered Interface Endpoints do not have this limitation since 2018)
 * Currently, no CloudWatch metric is available for the interface-based **VPC endpoint**
 * With Gateway **VPC Endpoint**, you must enable DNS resolution in your VPC
 * With Interface **VPC Endpoint**, 
@@ -1307,7 +1335,7 @@
 * SWF workflow execution can last upto 1 year
 * SWF provides a task oriented API, whereas SQS peovides a message oriented API
 * SWF Actors
-  * Workflow Startes
+  * Workflow Starters
   * Deciders - 
     * Handles special tasks called decision tasks. Amazon SWF issues decision tasks whenever a workflow execution has transitions such as an activity task completing or timing out
     * decides the next steps, including any new activity tasks, and returns those to Amazon SWF
@@ -1670,6 +1698,11 @@ KMS Custom Key Store | CloudHSM
 Single tenant key access | CloudHSM
 Services encrypted by default | Glacier, Storage Gateway, CloudTrail
 AWS CLI Not able to connect | Make sure the region is correctly specified
+Microsoft Active Directory | AWS SSO
+AWS Best Practices | AWS Trusted Advisor
+Log scan for security threats, udr of region never used before, password strength reduction | GuardDuty
+WAF administration maintenance across accounts & resources | AWS Firewall Manager
+Offload SSL/TLS processing from web servers | CloudHSM
 
 
 ## Serverless Services
